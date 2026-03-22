@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import FoodCard from '../components/FoodCard';
 import Header from '../components/Header';
 import type { Food } from '../api/foods';
+import { fetchFoods } from '../api/foods';
 import heConfig from '../../../shared/he.json';
 
 type HeFoodItem = {
@@ -11,6 +12,9 @@ type HeFoodItem = {
   price: number;
   category: string;
   active?: boolean;
+  svgLabel: string;
+  svgBg: string;
+  svgFg: string;
   imageFile?: string;
 };
 
@@ -22,15 +26,25 @@ type HeCategory = {
 
 export default function Menu() {
   const [menuData, setMenuData] = useState<Record<string, Food[] | null>>({
-    dryFood: null,
-    wetFood: null,
-    treats: null,
-    supplements: null,
+    starters: null,
+    pizzas: null,
+    desserts: null,
   });
   const [error, setError] = useState<string | null>(null);
 
-  const { strings, foods: heFoods, categories: heCategories } = heConfig as {
-    strings: { loading: string; errorLoadingMenu: string };
+  const { strings, foods: heFoods, categories: heCategories } = heConfig as unknown as {
+    strings: {
+      logo: string;
+      searchPlaceholder: string;
+      title: string;
+      subtitle: string;
+      menuTitleStarters: string;
+      menuTitlePizzas: string;
+      menuTitleDesserts: string;
+      loading: string;
+      errorLoadingMenu: string;
+      orderNowButton: string;
+    };
     foods: HeFoodItem[];
     categories: HeCategory[];
   };
@@ -57,32 +71,53 @@ export default function Menu() {
   }, [heFoods, heCategories]);
 
   useEffect(() => {
-    setMenuData(fallbackData);
-  }, [fallbackData]);
+    const initialData: Record<string, Food[] | null> = {};
+    for (const cat of heCategories) {
+      initialData[cat.key] = null;
+    }
+    setMenuData(initialData);
+
+    let cancelled = false;
+    (async () => {
+      try {
+        setError(null);
+        const data = await fetchFoods();
+        if (!cancelled) setMenuData({
+          starters: data.starters,
+          pizzas: data.pizzas,
+          desserts: data.desserts,
+        });
+      } catch (e) {
+        if (!cancelled) setMenuData(fallbackData);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [fallbackData, heCategories]);
 
   return (
     <div className="page">
       <Header />
 
-      {sortedCategories
-        .filter(cat => menuData[cat.key]?.some(item => item.active))
-        .map((cat) => (
-          <section key={cat.key} className="menuSection">
-            <h2 className="menuSection__title">{cat.name}</h2>
-            {menuData[cat.key] === null ? (
-              <div className="menuLoading">{strings.loading}</div>
-            ) : (
-              <>
-                {error ? <div className="menuError">{strings.errorLoadingMenu}</div> : null}
-                <div className="menuGrid">
-                  {menuData[cat.key]!.filter(item => item.active).map((item) => (
-                    <FoodCard key={item.id} item={item} />
-                  ))}
-                </div>
-              </>
-            )}
-          </section>
-        ))}
+      {sortedCategories.map((cat) => (
+        <section key={cat.key} className="menuSection">
+          <h2 className="menuSection__title">{cat.name}</h2>
+          {menuData[cat.key] === null ? (
+            <div className="menuLoading">{strings.loading}</div>
+          ) : (
+            <>
+              {error ? <div className="menuError">{error}</div> : null}
+              <div className="menuGrid">
+                {menuData[cat.key]!.filter(item => item.active).map((item) => (
+                  <FoodCard key={item.id} item={item} />
+                ))}
+              </div>
+            </>
+          )}
+        </section>
+      ))}
     </div>
   );
 }
+

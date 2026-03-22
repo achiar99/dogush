@@ -17,10 +17,13 @@ type HeFoodConfig = {
   price: number;
   category: string;
   active?: boolean;
+  svgLabel: string;
+  svgBg: string;
+  svgFg: string;
   imageFile?: string;
 };
 
-const heFoods = (heConfig as { foods: HeFoodConfig[] }).foods;
+const heFoods = (heConfig as unknown as { foods: HeFoodConfig[] }).foods;
 
 export const foods: Food[] = heFoods.map((p) => ({
   id: p.id,
@@ -32,7 +35,7 @@ export const foods: Food[] = heFoods.map((p) => ({
   imageUrl: `/images/${p.imageFile}`
 }));
 
-export const dryFood = foods.filter(f => f.category === 'dryFood');
-export const wetFood = foods.filter(f => f.category === 'wetFood');
-export const treats = foods.filter(f => f.category === 'treats');
-export const supplements = foods.filter(f => f.category === 'supplements');
+export const pizzas = foods.filter(f => f.category === 'pizzas');
+export const starters = foods.filter(f => f.category === 'starters');
+export const desserts = foods.filter(f => f.category === 'desserts');
+

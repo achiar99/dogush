@@ -2,7 +2,11 @@ import { Link } from 'react-router-dom';
 import heConfig from '../../../shared/he.json';
 
 const { strings, logoImageFile } = heConfig as {
-  strings: { logo: string; title: string; subtitle: string };
+  strings: {
+    logo: string;
+    title: string;
+    subtitle: string;
+  };
   logoImageFile?: string;
 };
 
