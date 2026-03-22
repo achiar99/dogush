@@ -102,7 +102,10 @@ export default function AdminDashboard() {
                 </div>
               </td>
 
-              <td style={{ padding: 12 }}>{order.total}{currencySymbol}</td>
+              <td style={{ padding: 12 }}>
+                {currencySymbol}
+                {order.total}
+              </td>
               
               <td style={{ textAlign: 'center', padding: 12 }}>
                 <span style={{
