@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react';
 import FoodCard from '../components/FoodCard';
 import Header from '../components/Header';
 import type { Food } from '../api/foods';
-import { fetchFoods } from '../api/foods';
 import heConfig from '../../../shared/he.json';
 
 type HeFoodItem = {
@@ -30,9 +29,8 @@ export default function Menu() {
   });
   const [error, setError] = useState<string | null>(null);
 
-  const { loading, errorLoadingMenu, foods: heFoods, categories: heCategories } = heConfig as {
-    loading: string;
-    errorLoadingMenu: string;
+  const { strings, foods: heFoods, categories: heCategories } = heConfig as {
+    strings: { loading: string; errorLoadingMenu: string };
     foods: HeFoodItem[];
     categories: HeCategory[];
   };
@@ -72,10 +70,10 @@ export default function Menu() {
           <section key={cat.key} className="menuSection">
             <h2 className="menuSection__title">{cat.name}</h2>
             {menuData[cat.key] === null ? (
-              <div className="menuLoading">{loading}</div>
+              <div className="menuLoading">{strings.loading}</div>
             ) : (
               <>
-                {error ? <div className="menuError">{errorLoadingMenu}</div> : null}
+                {error ? <div className="menuError">{strings.errorLoadingMenu}</div> : null}
                 <div className="menuGrid">
                   {menuData[cat.key]!.filter(item => item.active).map((item) => (
                     <FoodCard key={item.id} item={item} />

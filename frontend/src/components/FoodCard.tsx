@@ -6,8 +6,8 @@ type Props = {
 };
 
 export default function FoodCard({ item }: Props) {
-  const { orderNowButton, currencySymbol } = heConfig as {
-    orderNowButton: string;
+  const { strings, currencySymbol } = heConfig as {
+    strings: { orderNowButton: string };
     currencySymbol: string;
   };
 
@@ -23,11 +23,10 @@ export default function FoodCard({ item }: Props) {
 
         <div className="product-card__footer">
           <div className="product-card__price">
-            {currencySymbol}
-            {item.price}
+            {currencySymbol}{item.price}
           </div>
           <button className="product-card__button" type="button">
-            {orderNowButton}
+            {strings.orderNowButton}
           </button>
         </div>
       </div>

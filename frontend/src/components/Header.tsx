@@ -1,10 +1,8 @@
 import { Link } from 'react-router-dom';
 import heConfig from '../../../shared/he.json';
 
-const { logo, title, subtitle, logoImageFile } = heConfig as {
-  logo: string;
-  title: string;
-  subtitle: string;
+const { strings, logoImageFile } = heConfig as {
+  strings: { logo: string; title: string; subtitle: string };
   logoImageFile?: string;
 };
 
@@ -17,15 +15,15 @@ export default function Header() {
             <img
               className="hero__logoImg"
               src={`/images/${logoImageFile}`}
-              alt={logo}
+              alt={strings.logo}
             />
           ) : (
-            <div className="hero__logo">{logo}</div>
+            <div className="hero__logo">{strings.logo}</div>
           )}
         </Link>
       </div>
-      <h1 className="hero__title">{title}</h1>
-      <p className="hero__subtitle">{subtitle}</p>
+      <h1 className="hero__title">{strings.title}</h1>
+      <p className="hero__subtitle">{strings.subtitle}</p>
     </header>
   );
 }

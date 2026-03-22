@@ -10,22 +10,24 @@ export default function AdminDashboard() {
   const [saveStatus, setSaveStatus] = useState('');
   const navigate = useNavigate();
 
-  const config = heConfig as {
+  const { strings, categories } = heConfig as {
+    strings: {
+      adminLogoutButton: string;
+      adminDashboardTitle: string;
+      tableHeaderName: string;
+      tableHeaderPrice: string;
+      tableHeaderCategory: string;
+      tableHeaderActive: string;
+      tableHeaderActions: string;
+      editButton: string;
+      saveButton: string;
+      cancelButton: string;
+      editProductTitle: string;
+      savedMessage: string;
+      activeYes: string;
+      activeNo: string;
+    };
     categories: Array<{ key: string; name: string }>;
-    adminLogoutButton: string;
-    adminDashboardTitle: string;
-    tableHeaderName: string;
-    tableHeaderPrice: string;
-    tableHeaderCategory: string;
-    tableHeaderActive: string;
-    tableHeaderActions: string;
-    editButton: string;
-    saveButton: string;
-    cancelButton: string;
-    editProductTitle: string;
-    savedMessage: string;
-    activeYes: string;
-    activeNo: string;
   };
 
   useEffect(() => {
@@ -60,7 +62,7 @@ export default function AdminDashboard() {
     if (res.ok) {
       setFoods(foods.map(f => f.id === editing.id ? editing : f));
       setEditing(null);
-      setSaveStatus(config.savedMessage);
+      setSaveStatus(strings.savedMessage);
       setTimeout(() => setSaveStatus(''), 2000);
     }
   };
@@ -70,8 +72,8 @@ export default function AdminDashboard() {
       <Header />
       <div className="admin-dashboard">
         <header className="admin-header">
-          <h1>{config.adminDashboardTitle}</h1>
-          <button onClick={handleLogout}>{config.adminLogoutButton}</button>
+          <h1>{strings.adminDashboardTitle}</h1>
+          <button onClick={handleLogout}>{strings.adminLogoutButton}</button>
         </header>
 
         {saveStatus && <div className="save-status">{saveStatus}</div>}
@@ -79,11 +81,11 @@ export default function AdminDashboard() {
         <table className="admin-table">
           <thead>
             <tr>
-              <th>{config.tableHeaderName}</th>
-              <th>{config.tableHeaderPrice}</th>
-              <th>{config.tableHeaderCategory}</th>
-              <th>{config.tableHeaderActive}</th>
-              <th>{config.tableHeaderActions}</th>
+              <th>{strings.tableHeaderName}</th>
+              <th>{strings.tableHeaderPrice}</th>
+              <th>{strings.tableHeaderCategory}</th>
+              <th>{strings.tableHeaderActive}</th>
+              <th>{strings.tableHeaderActions}</th>
             </tr>
           </thead>
           <tbody>
@@ -91,10 +93,10 @@ export default function AdminDashboard() {
               <tr key={food.id}>
                 <td>{food.name}</td>
                 <td>₪{food.price}</td>
-                <td>{config.categories.find(c => c.key === food.category)?.name || food.category}</td>
-                <td>{food.active ? config.activeYes : config.activeNo}</td>
+                <td>{categories.find(c => c.key === food.category)?.name || food.category}</td>
+                <td>{food.active ? strings.activeYes : strings.activeNo}</td>
                 <td>
-                  <button onClick={() => setEditing({ ...food })}>{config.editButton}</button>
+                  <button onClick={() => setEditing({ ...food })}>{strings.editButton}</button>
                 </td>
               </tr>
             ))}
@@ -104,9 +106,9 @@ export default function AdminDashboard() {
         {editing && (
           <div className="modal">
             <div className="modal-content">
-              <h2>{config.editProductTitle}</h2>
+              <h2>{strings.editProductTitle}</h2>
               <label>
-                {config.tableHeaderName}:
+                {strings.tableHeaderName}:
                 <input
                   type="text"
                   value={editing.name}
@@ -114,7 +116,7 @@ export default function AdminDashboard() {
                 />
               </label>
               <label>
-                {config.tableHeaderPrice}:
+                {strings.tableHeaderPrice}:
                 <input
                   type="number"
                   value={editing.price}
@@ -122,18 +124,18 @@ export default function AdminDashboard() {
                 />
               </label>
               <label>
-                {config.tableHeaderCategory}:
+                {strings.tableHeaderCategory}:
                 <select
                   value={editing.category}
                   onChange={e => setEditing({ ...editing, category: e.target.value })}
                 >
-                  {config.categories.map(c => (
+                  {categories.map(c => (
                     <option key={c.key} value={c.key}>{c.name}</option>
                   ))}
                 </select>
               </label>
               <label className="checkbox-label">
-                {config.tableHeaderActive}:
+                {strings.tableHeaderActive}:
                 <input
                   type="checkbox"
                   checked={editing.active}
@@ -141,8 +143,8 @@ export default function AdminDashboard() {
                 />
               </label>
               <div className="modal-buttons">
-                <button onClick={handleSave}>{config.saveButton}</button>
-                <button onClick={() => setEditing(null)}>{config.cancelButton}</button>
+                <button onClick={handleSave}>{strings.saveButton}</button>
+                <button onClick={() => setEditing(null)}>{strings.cancelButton}</button>
               </div>
             </div>
           </div>
