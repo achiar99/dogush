@@ -47,9 +47,29 @@
     "tableHeaderTableNumber": "מספר שולחן",
     "tableHeaderChairs": "כיסאות",
     "tableHeaderAvailable": "כיסאות פנויים",
-    "categoryPizzas": "פיצות",
-    "categoryStarters": "פתיחים",
-    "categoryDesserts": "קינוחים"
+    "navHome": "בית",
+    "navAdmin": "ניהול",
+    "adminNavProducts": "מוצרים",
+    "adminNavOrders": "הזמנות",
+    "ordersTitle": "הזמנות",
+    "tableHeaderOrderId": "מספר הזמנה",
+    "tableHeaderCustomer": "לקוח",
+    "tableHeaderTotal": "סה״כ",
+    "tableHeaderStatus": "סטטוס",
+    "tableHeaderDate": "תאריך",
+    "statusPending": "ממתין",
+    "statusCompleted": "הושלם",
+    "statusCancelled": "בוטל",
+    "tableHeaderActions": "פעולות",
+    "editButton": "ערוך",
+    "saveButton": "שמור",
+    "cancelButton": "ביטול",
+    "editProductTitle": "עריכת מוצר",
+    "savedMessage": "נשמר!",
+    "activeYes": "כן",
+    "activeNo": "לא",
+    "adminOrdersTitle": "הזמנות",
+    "tableHeaderTime": "תאריך"
   },
   "currencySymbol": "₪",
   "logoImageFile": "logo.png",
@@ -104,6 +124,23 @@
       "category": "dryFood",
       "active": true,
       "imageFile": "5.png"
+    }
+  ],
+  "orders": [
+    {
+      "id": "1",
+      "name": "דוד",
+      "address": "שוהם",
+      "email": "bla@gmail.com",
+      "items": [
+        {
+          "id": "1",
+          "amount": 2
+        }
+      ],
+      "total": 800,
+      "status": "open",
+      "time": ""
     }
   ]
 }
