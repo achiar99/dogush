@@ -63,7 +63,7 @@ app.use((_req, res) => {
   res.status(404).json({ error: 'Not found' });
 });
 
-const port = Number(process.env.PORT ?? 4000);
+const port = Number(process.env.PORT ?? 5000);
 app.listen(port, () => {
   // eslint-disable-next-line no-console
   console.log(`Pizza backend listening on http://localhost:${port}`);

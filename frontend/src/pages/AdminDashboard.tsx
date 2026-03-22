@@ -42,7 +42,7 @@ export default function AdminDashboard() {
     if (toDate) params.append('to', toDate);
     const query = params.toString();
     const url = query ? `/api/admin/stats?${query}` : '/api/admin/stats';
-    fetch(`http://localhost:4000${url}`)
+    fetch(`http://localhost:5000${url}`)
       .then(res => res.json())
       .then(data => setFoods(data))
       .catch(() => setFoods([]));
