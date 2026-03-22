@@ -61,9 +61,9 @@ export default function FoodEditor() {
   return (
     <AdminLayout>
       <h1>{strings.adminFoodEditorTitle}</h1>
-      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+      <table style={{ width: '100%', borderCollapse: 'collapse', direction: 'rtl' }}>
         <thead>
-          <tr style={{ borderBottom: '2px solid #ddd' }}>
+          <tr style={{ backgroundColor: '#f9f9f9', borderBottom: '2px solid #eee' }}>
             <th style={{ textAlign: 'right', padding: 12 }}>{strings.foodEditorTableName}</th>
             <th style={{ textAlign: 'right', padding: 12 }}>{strings.foodEditorTableCategory}</th>
             <th style={{ textAlign: 'right', padding: 12 }}>{strings.foodEditorTablePrice}</th>

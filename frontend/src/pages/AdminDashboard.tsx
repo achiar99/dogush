@@ -66,9 +66,9 @@ export default function AdminDashboard() {
           style={{ padding: 8 }}
         />
       </div>
-      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+      <table style={{ width: '100%', borderCollapse: 'collapse', direction: 'rtl' }}>
         <thead>
-          <tr style={{ borderBottom: '2px solid #ddd' }}>
+          <tr style={{ backgroundColor: '#f9f9f9', borderBottom: '2px solid #eee' }}>
             <th style={{ textAlign: 'right', padding: 12 }}>{strings.tableHeaderName}</th>
             <th style={{ textAlign: 'right', padding: 12 }}>{strings.tableHeaderCategory}</th>
             <th style={{ textAlign: 'right', padding: 12 }}>{strings.tableHeaderPrice}</th>

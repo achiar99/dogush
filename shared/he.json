@@ -69,7 +69,19 @@
     "activeYes": "כן",
     "activeNo": "לא",
     "adminOrdersTitle": "הזמנות",
-    "tableHeaderTime": "תאריך"
+    "tableHeaderTime": "תאריך",
+    "editOrderTitle": "עריכת הזמנה",
+    "orderCustomer": "לקוח",
+    "orderAddress": "כתובת",
+    "orderEmail": "אימייל",
+    "orderItems": "פריטים",
+    "orderTotal": "סה״כ",
+    "orderStatus": "סטטוס",
+    "orderTime": "זמן",
+    "statusOpen": "פתוח",
+    "statusInProgress": "בטיפול",
+    "statusCompleted": "הושלם",
+    "statusCancelled": "בוטל"
   },
   "currencySymbol": "₪",
   "logoImageFile": "logo.png",
@@ -128,19 +140,42 @@
   ],
   "orders": [
     {
-      "id": "1",
-      "name": "דוד",
+      "id": "1001",
+      "customer": "דוד",
       "address": "שוהם",
       "email": "bla@gmail.com",
-      "items": [
-        {
-          "id": "1",
-          "amount": 2
-        }
-      ],
-      "total": 800,
+      "total": 2490,
       "status": "open",
-      "time": ""
+      "time": "2026-03-22T08:15:00Z",
+      "items": [
+        { "id": "1", "quantity": 1 }
+      ]
+    },
+    {
+      "id": "1002",
+      "customer": "אבי",
+      "address": "תל אביב",
+      "email": "avi@example.com",
+      "total": 1903,
+      "status": "completed",
+      "time": "2026-03-22T08:45:00Z",
+      "items": [
+        { "id": "2", "quantity": 1 },
+        { "id": "3", "quantity": 1 }
+      ]
+    },
+    {
+      "id": "1003",
+      "customer": "חן",
+      "address": "שוהם",
+      "email": "chen@test.co.il",
+      "total": 360,
+      "status": "open",
+      "time": "2026-03-22T09:05:00Z",
+      "items": [
+        { "id": "3", "quantity": 1 },
+        { "id": "5", "quantity": 1 }
+      ]
     }
   ]
 }
