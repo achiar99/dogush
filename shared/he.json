@@ -79,9 +79,7 @@
     "orderStatus": "סטטוס",
     "orderTime": "זמן",
     "statusOpen": "פתוח",
-    "statusInProgress": "בטיפול",
-    "statusCompleted": "הושלם",
-    "statusCancelled": "בוטל"
+    "statusInProgress": "בטיפול"
   },
   "currencySymbol": "₪",
   "logoImageFile": "logo.png",
