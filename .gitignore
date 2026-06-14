@@ -7,3 +7,14 @@ build
 .vscode
 .idea
 .npm-cache
+
+# Terraform
+infra/.terraform/
+infra/*.tfstate
+infra/*.tfstate.*
+infra/*.tfstate.backup
+infra/lambda.zip
+infra/.terraform.lock.hcl
+
+# Lambda build output
+backend/lambda-package/
