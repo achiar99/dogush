@@ -12,12 +12,6 @@ import { randomUUID } from 'crypto';
 
 const client = new DynamoDBClient({
   region: process.env.AWS_REGION || 'eu-north-1',
-  credentials: process.env.AWS_ACCESS_KEY_ID
-    ? {
-        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || '',
-      }
-    : undefined,
 });
 
 export const docClient = DynamoDBDocumentClient.from(client, {
@@ -172,6 +166,30 @@ export async function updateOrder(orderId: string, updates: Partial<Order>): Pro
     }),
   );
   return result.Attributes as Order;
+}
+
+// ─── Categories ───────────────────────────────────────────────────────────────
+const CATEGORIES_TABLE = process.env.CATEGORIES_TABLE || `pet-store-${ENV}-Categories`;
+
+export interface Category {
+  key: string;
+  name: string;
+  priority: number;
+}
+
+export async function listCategories(): Promise<Category[]> {
+  const result = await docClient.send(new ScanCommand({ TableName: CATEGORIES_TABLE }));
+  const items = (result.Items || []) as Category[];
+  return items.sort((a, b) => a.priority - b.priority);
+}
+
+export async function createCategory(data: Category): Promise<Category> {
+  await docClient.send(new PutCommand({ TableName: CATEGORIES_TABLE, Item: data }));
+  return data;
+}
+
+export async function deleteCategory(key: string): Promise<void> {
+  await docClient.send(new DeleteCommand({ TableName: CATEGORIES_TABLE, Key: { key } }));
 }
 
 // ─── Legacy stats (for dashboard) ────────────────────────────────────────────

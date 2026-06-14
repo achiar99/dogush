@@ -2,67 +2,74 @@ import { useEffect, useMemo, useState } from 'react';
 import ItemCard from '../components/ItemCard';
 import Header from '../components/Header';
 import type { Item } from '../api/items';
-import { fetchItems } from '../api/items';
 import heConfig from '../../../shared/he.json';
 
-type HeCategory = { key: string; name: string; priority: number };
+interface Category {
+  key: string;
+  name: string;
+  priority: number;
+}
+
+const API = import.meta.env.VITE_API_BASE_URL || '';
 
 export default function Menu() {
-  const [itemsByCategory, setItemsByCategory] = useState<Record<string, Item[]>>({});
-
-  const { foods: heItems, categories: heCategories } = heConfig as {
-    foods: Array<{ id: string; name: string; description: string; price: number; category: string; active?: boolean; imageFile?: string }>;
-    categories: HeCategory[];
-  };
-
-  const sortedCategories = useMemo(
-    () => [...heCategories].sort((a, b) => a.priority - b.priority),
-    [heCategories],
-  );
-
-  const fallbackByCategory = useMemo(() => {
-    const result: Record<string, Item[]> = {};
-    for (const cat of heCategories) {
-      result[cat.key] = heItems
-        .filter(p => p.category === cat.key)
-        .map(p => ({
-          id: p.id, name: p.name, description: p.description,
-          price: p.price, category: p.category, active: p.active ?? true,
-          imageUrl: `/images/${p.imageFile}`,
-        }));
-    }
-    return result;
-  }, [heItems, heCategories]);
+  const [items, setItems] = useState<Item[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
-    fetchItems()
-      .then(items => {
-        const byCategory: Record<string, Item[]> = {};
-        for (const cat of heCategories) {
-          byCategory[cat.key] = items.filter(i => i.category === cat.key && i.active);
-        }
-        setItemsByCategory(byCategory);
+    Promise.all([
+      fetch(`${API}/api/products`).then(r => r.json()),
+      fetch(`${API}/api/categories`).then(r => r.json()),
+    ])
+      .then(([prods, cats]) => {
+        setItems(Array.isArray(prods) ? prods : []);
+        setCategories(Array.isArray(cats) ? cats.sort((a: Category, b: Category) => a.priority - b.priority) : []);
       })
-      .catch(() => setItemsByCategory(fallbackByCategory));
+      .catch(() => setError(true))
+      .finally(() => setLoading(false));
   }, []);
 
-  const data = Object.keys(itemsByCategory).length > 0 ? itemsByCategory : fallbackByCategory;
+  const byCategory = useMemo(() => {
+    const result: Record<string, Item[]> = {};
+    for (const cat of categories) {
+      result[cat.key] = items.filter(i => i.category === cat.key && i.active !== false);
+    }
+    // also show products whose category has no matching category entry
+    for (const item of items) {
+      if (item.active !== false && !categories.find(c => c.key === item.category)) {
+        result[item.category] = result[item.category] ?? [];
+        result[item.category].push(item);
+      }
+    }
+    return result;
+  }, [items, categories]);
+
+  const visibleCategories = useMemo(() => {
+    const fromApi = categories.filter(c => (byCategory[c.key] ?? []).length > 0);
+    // add any orphan category keys not in the categories list
+    const orphanKeys = Object.keys(byCategory).filter(k => !categories.find(c => c.key === k));
+    const orphans: Category[] = orphanKeys.map(k => ({ key: k, name: k, priority: 999 }));
+    return [...fromApi, ...orphans];
+  }, [categories, byCategory]);
+
+  if (loading) return <div className="page"><Header /><p style={{ textAlign: 'center', marginTop: 40 }}>{heConfig.strings.loading}</p></div>;
+  if (error)   return <div className="page"><Header /><p style={{ textAlign: 'center', marginTop: 40 }}>{heConfig.strings.errorLoadingMenu}</p></div>;
 
   return (
     <div className="page">
       <Header />
-      {sortedCategories
-        .filter(cat => (data[cat.key] ?? []).length > 0)
-        .map(cat => (
-          <section key={cat.key} className="menuSection">
-            <h2 className="menuSection__title">{cat.name}</h2>
-            <div className="menuGrid">
-              {(data[cat.key] ?? []).map(item => (
-                <ItemCard key={item.id} item={item} />
-              ))}
-            </div>
-          </section>
-        ))}
+      {visibleCategories.map(cat => (
+        <section key={cat.key} className="menuSection">
+          <h2 className="menuSection__title">{cat.name}</h2>
+          <div className="menuGrid">
+            {(byCategory[cat.key] ?? []).map(item => (
+              <ItemCard key={item.id} item={item} />
+            ))}
+          </div>
+        </section>
+      ))}
     </div>
   );
 }

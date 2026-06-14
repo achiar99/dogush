@@ -25,8 +25,8 @@ data "archive_file" "lambda_zip" {
 resource "aws_lambda_function" "backend" {
   function_name    = "${local.prefix}-backend"
   role             = aws_iam_role.lambda.arn
-  handler          = "lambda.handler"
-  runtime          = "nodejs20.x"
+  handler          = "backend/dist/lambda.handler"
+  runtime          = "nodejs22.x"
   filename         = data.archive_file.lambda_zip.output_path
   source_code_hash = data.archive_file.lambda_zip.output_base64sha256
   timeout          = 30
@@ -41,6 +41,7 @@ resource "aws_lambda_function" "backend" {
       ORDERS_TABLE                        = aws_dynamodb_table.orders.name
       ADMINS_TABLE                        = aws_dynamodb_table.admins.name
       USERS_TABLE                         = aws_dynamodb_table.users.name
+      CATEGORIES_TABLE                    = aws_dynamodb_table.categories.name
       IMAGES_BUCKET                       = aws_s3_bucket.images.bucket
       IMAGES_BASE_URL                     = "https://${aws_s3_bucket.images.bucket_regional_domain_name}"
     }

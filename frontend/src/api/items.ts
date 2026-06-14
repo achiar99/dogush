@@ -5,7 +5,7 @@ export interface Item {
   name: string;
   description: string;
   price: number;
-  imageUrl: string;
+  imageFile?: string;
   category: string;
   active: boolean;
 }

@@ -9,6 +9,7 @@ const { strings } = heConfig as {
     adminNavDashboard: string;
     adminNavProducts: string;
     adminNavOrders: string;
+    adminNavCategories: string;
   };
 };
 
@@ -138,6 +139,22 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                 })}
               >
                 {strings.adminNavProducts}
+              </NavLink>
+              <NavLink
+                to="/admin/categories"
+                onClick={() => setMenuOpen(false)}
+                style={({ isActive }) => ({
+                  padding: '10px 20px',
+                  textDecoration: 'none',
+                  borderRadius: 6,
+                  backgroundColor: isActive ? '#c15f2a' : '#fff',
+                  color: isActive ? '#fff' : '#333',
+                  fontWeight: isActive ? 'bold' : 'normal',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                  transition: 'all 0.2s',
+                })}
+              >
+                {strings.adminNavCategories}
               </NavLink>
               <NavLink
                 to="/admin/orders"

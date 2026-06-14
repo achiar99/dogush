@@ -16,10 +16,16 @@ echo "==> Assembling Lambda package at $PACKAGE_DIR..."
 rm -rf "$PACKAGE_DIR"
 mkdir -p "$PACKAGE_DIR"
 
-# Copy compiled output
-cp -r "$BACKEND/dist" "$PACKAGE_DIR/dist"
+# Mirror the source tree so that ../../shared/he.json paths resolve correctly.
+# In Lambda: /var/task/backend/dist/app.js → ../../shared/he.json → /var/task/shared/he.json
+mkdir -p "$PACKAGE_DIR/backend"
+cp -r "$BACKEND/dist" "$PACKAGE_DIR/backend/dist"
 
-# Copy package files and install production deps only
+# shared/he.json required by compiled backend code
+mkdir -p "$PACKAGE_DIR/shared"
+cp "$REPO_ROOT/shared/he.json" "$PACKAGE_DIR/shared/he.json"
+
+# node_modules at the package root so Lambda can find them from backend/dist/
 cp "$BACKEND/package.json" "$PACKAGE_DIR/package.json"
 cd "$PACKAGE_DIR"
 npm install --omit=dev --ignore-scripts

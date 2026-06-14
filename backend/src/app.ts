@@ -14,6 +14,9 @@ import {
   updateOrder,
   getOrderStats,
   getTableReservations,
+  listCategories,
+  createCategory,
+  deleteCategory,
 } from './dynamodb';
 import { getPresignedUploadUrl } from './s3';
 import heConfig from '../../shared/he.json';
@@ -56,6 +59,16 @@ app.get('/api/products', async (_req, res) => {
     console.error('Products error:', error);
     // fall back to static data if DynamoDB is unavailable
     res.json(heConfig.foods);
+  }
+});
+
+app.get('/api/categories', async (_req, res) => {
+  try {
+    const cats = await listCategories();
+    res.json(cats);
+  } catch (error) {
+    console.error('Categories error:', error);
+    res.json(heConfig.categories);
   }
 });
 
@@ -125,6 +138,49 @@ app.delete('/api/admin/products/:id', requireAdmin, async (req, res) => {
   } catch (error) {
     console.error('Delete product error:', error);
     res.status(500).json({ error: 'Failed to delete product' });
+  }
+});
+
+// ─── Admin: categories ────────────────────────────────────────────────────────
+app.get('/api/admin/categories', requireAdmin, async (_req, res) => {
+  try {
+    res.json(await listCategories());
+  } catch (error) {
+    console.error('Admin categories error:', error);
+    res.status(500).json({ error: 'Failed to fetch categories' });
+  }
+});
+
+app.post('/api/admin/categories', requireAdmin, async (req, res) => {
+  try {
+    const { name } = req.body;
+    if (!name) {
+      res.status(400).json({ error: 'name is required' });
+      return;
+    }
+    const { randomUUID } = await import('crypto');
+    const cat = await createCategory({ key: randomUUID(), name, priority: 0 });
+    res.status(201).json(cat);
+  } catch (error) {
+    console.error('Create category error:', error);
+    res.status(500).json({ error: 'Failed to create category' });
+  }
+});
+
+app.delete('/api/admin/categories/:key', requireAdmin, async (req, res) => {
+  try {
+    const key = String(req.params.key);
+    const products = await listProducts(false);
+    const inUse = products.some(p => p.category === key);
+    if (inUse) {
+      res.status(409).json({ error: 'לא ניתן למחוק קטגוריה עם מוצרים פעילים' });
+      return;
+    }
+    await deleteCategory(key);
+    res.json({ ok: true });
+  } catch (error) {
+    console.error('Delete category error:', error);
+    res.status(500).json({ error: 'Failed to delete category' });
   }
 });
 

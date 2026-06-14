@@ -4,6 +4,7 @@ import AdminLogin from './pages/AdminLogin';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminOrders from './pages/AdminOrders';
 import ProductEditor from './pages/ProductEditor';
+import CategoryEditor from './pages/CategoryEditor';
 
 export default function App() {
   return (
@@ -15,6 +16,7 @@ export default function App() {
       <Route path="/admin/products" element={<ProductEditor />} />
       <Route path="/admin/editor" element={<ProductEditor />} />
       <Route path="/admin/orders" element={<AdminOrders />} />
+      <Route path="/admin/categories" element={<CategoryEditor />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

@@ -12,7 +12,7 @@ export default function ItemCard({ item }: Props) {
   return (
     <article className="item-card" aria-label={item.name}>
       <div className="item-card__imageWrap">
-        <img className="item-card__image" src={item.imageUrl} alt={item.name} />
+        {item.imageFile && <img className="item-card__image" src={item.imageFile} alt={item.name} />}
       </div>
       <div className="item-card__content">
         <h3 className="item-card__name">{item.name}</h3>
