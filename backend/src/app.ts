@@ -1,3 +1,4 @@
+import bcrypt from 'bcryptjs';
 import cors from 'cors';
 import express from 'express';
 import helmet from 'helmet';
@@ -17,6 +18,11 @@ import {
   listCategories,
   createCategory,
   deleteCategory,
+  getUserByEmail,
+  getUserById,
+  createUser,
+  updateUser,
+  listOrdersByUser,
 } from './dynamodb';
 import { getPresignedUploadUrl } from './s3';
 import heConfig from '../../shared/he.json';
@@ -30,6 +36,30 @@ app.use(cors());
 app.use(express.json());
 
 // ─── Auth middleware ──────────────────────────────────────────────────────────
+function getRequestUser(req: express.Request): { userId: string } | null {
+  const authHeader = req.headers.authorization;
+  if (!authHeader?.startsWith('Bearer ')) return null;
+  const token = authHeader.split(' ')[1];
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET) as { userId?: string; username?: string };
+    if (decoded.userId) return { userId: decoded.userId };
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+function requireUser(
+  req: express.Request,
+  res: express.Response,
+  next: express.NextFunction,
+) {
+  const user = getRequestUser(req);
+  if (!user) { res.status(401).json({ error: 'Unauthorized' }); return; }
+  (req as any).userId = user.userId;
+  next();
+}
+
 function requireAdmin(
   req: express.Request,
   res: express.Response,
@@ -89,11 +119,78 @@ app.post('/api/orders', async (req, res) => {
       res.status(400).json({ error: 'customer and items are required' });
       return;
     }
-    const order = await createOrder({ customer, address, email, items, total });
+    const userClaim = getRequestUser(req);
+    const order = await createOrder({ customer, address, email, items, total, ...(userClaim ? { userId: userClaim.userId } : {}) });
     res.status(201).json(order);
   } catch (error) {
     console.error('Create order error:', error);
     res.status(500).json({ error: 'Failed to create order' });
+  }
+});
+
+// ─── User auth ────────────────────────────────────────────────────────────────
+app.post('/api/auth/register', async (req, res) => {
+  try {
+    const { email, password, name } = req.body;
+    if (!email || !password || !name) {
+      res.status(400).json({ error: 'email, password and name are required' });
+      return;
+    }
+    const existing = await getUserByEmail(email.toLowerCase());
+    if (existing) { res.status(409).json({ error: 'כתובת האימייל כבר בשימוש' }); return; }
+    const passwordHash = await bcrypt.hash(password, 10);
+    const user = await createUser({ email: email.toLowerCase(), passwordHash, name });
+    const token = jwt.sign({ userId: user.userId }, JWT_SECRET, { expiresIn: '30d' });
+    res.status(201).json({ token, user: { userId: user.userId, email: user.email, name: user.name, phone: user.phone, address: user.address } });
+  } catch (error) {
+    console.error('Register error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    if (!email || !password) { res.status(400).json({ error: 'email and password required' }); return; }
+    const user = await getUserByEmail(email.toLowerCase());
+    if (!user) { res.status(401).json({ error: 'אימייל או סיסמה שגויים' }); return; }
+    const valid = await bcrypt.compare(password, user.passwordHash);
+    if (!valid) { res.status(401).json({ error: 'אימייל או סיסמה שגויים' }); return; }
+    const token = jwt.sign({ userId: user.userId }, JWT_SECRET, { expiresIn: '30d' });
+    res.json({ token, user: { userId: user.userId, email: user.email, name: user.name, phone: user.phone, address: user.address } });
+  } catch (error) {
+    console.error('Login error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.get('/api/auth/me', requireUser, async (req, res) => {
+  try {
+    const user = await getUserById((req as any).userId);
+    if (!user) { res.status(404).json({ error: 'User not found' }); return; }
+    res.json({ userId: user.userId, email: user.email, name: user.name, phone: user.phone, address: user.address });
+  } catch (error) {
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.put('/api/auth/me', requireUser, async (req, res) => {
+  try {
+    const { name, phone, address } = req.body;
+    const updated = await updateUser((req as any).userId, { name, phone, address });
+    res.json({ userId: updated.userId, email: updated.email, name: updated.name, phone: updated.phone, address: updated.address });
+  } catch (error) {
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.get('/api/orders/my', requireUser, async (req, res) => {
+  try {
+    const orders = await listOrdersByUser((req as any).userId);
+    res.json(orders);
+  } catch (error) {
+    console.error('My orders error:', error);
+    res.status(500).json({ error: 'Failed to fetch orders' });
   }
 });
 

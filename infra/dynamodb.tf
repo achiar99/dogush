@@ -51,9 +51,21 @@ resource "aws_dynamodb_table" "orders" {
     type = "S"
   }
 
+  attribute {
+    name = "userId"
+    type = "S"
+  }
+
   global_secondary_index {
     name            = "byStatus"
     hash_key        = "status"
+    range_key       = "createdAt"
+    projection_type = "ALL"
+  }
+
+  global_secondary_index {
+    name            = "byUserId"
+    hash_key        = "userId"
     range_key       = "createdAt"
     projection_type = "ALL"
   }

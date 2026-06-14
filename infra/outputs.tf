@@ -9,8 +9,8 @@ output "frontend_bucket" {
 }
 
 output "frontend_url" {
-  description = "Public S3 static website URL for the frontend"
-  value       = "http://${aws_s3_bucket_website_configuration.frontend.website_endpoint}"
+  description = "CloudFront HTTPS URL for the frontend"
+  value       = "https://${aws_cloudfront_distribution.frontend.domain_name}"
 }
 
 output "images_bucket" {

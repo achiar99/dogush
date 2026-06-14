@@ -1,12 +1,18 @@
 import { useState } from 'react';
 import { useCart } from '../context/CartContext';
+import { useUser } from '../context/UserContext';
 
 const API = import.meta.env.VITE_API_BASE_URL || '';
 
 export default function CartDrawer({ onClose }: { onClose: () => void }) {
   const { items, remove, updateQty, clear, total } = useCart();
+  const { user, token } = useUser();
   const [checkout, setCheckout] = useState(false);
-  const [form, setForm] = useState({ customer: '', address: '', email: '' });
+  const [form, setForm] = useState({
+    customer: user?.name || '',
+    address: user?.address || '',
+    email: user?.email || '',
+  });
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -16,9 +22,11 @@ export default function CartDrawer({ onClose }: { onClose: () => void }) {
     setSubmitting(true);
     setError(null);
     try {
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
       const res = await fetch(`${API}/api/orders`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({
           customer: form.customer,
           address: form.address,

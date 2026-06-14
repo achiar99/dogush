@@ -104,6 +104,7 @@ export interface Order {
   customer: string;
   address?: string;
   email?: string;
+  userId?: string;
   items: OrderItem[];
   total: number;
   status: 'open' | 'inProgress' | 'completed' | 'cancelled';
@@ -210,6 +211,71 @@ export async function createCategory(data: Category): Promise<Category> {
 
 export async function deleteCategory(key: string): Promise<void> {
   await docClient.send(new DeleteCommand({ TableName: CATEGORIES_TABLE, Key: { key } }));
+}
+
+// ─── Users ────────────────────────────────────────────────────────────────────
+const USERS_TABLE = process.env.USERS_TABLE || `pet-store-${ENV}-Users`;
+
+export interface User {
+  userId: string;
+  email: string;
+  passwordHash: string;
+  name: string;
+  phone?: string;
+  address?: string;
+  createdAt: string;
+}
+
+export async function getUserByEmail(email: string): Promise<User | null> {
+  const result = await docClient.send(new QueryCommand({
+    TableName: USERS_TABLE,
+    IndexName: 'byEmail',
+    KeyConditionExpression: 'email = :email',
+    ExpressionAttributeValues: { ':email': email },
+    Limit: 1,
+  }));
+  return ((result.Items || [])[0] as User) ?? null;
+}
+
+export async function getUserById(userId: string): Promise<User | null> {
+  const result = await docClient.send(
+    new GetCommand({ TableName: USERS_TABLE, Key: { userId } }),
+  );
+  return (result.Item as User) ?? null;
+}
+
+export async function createUser(data: Omit<User, 'userId' | 'createdAt'>): Promise<User> {
+  const user: User = { ...data, userId: randomUUID(), createdAt: new Date().toISOString() };
+  await docClient.send(new PutCommand({ TableName: USERS_TABLE, Item: user }));
+  return user;
+}
+
+export async function updateUser(userId: string, updates: Partial<Pick<User, 'name' | 'phone' | 'address'>>): Promise<User> {
+  const fields = Object.entries(updates);
+  const exprParts = fields.map(([k], i) => `#f${i} = :v${i}`);
+  const names: Record<string, string> = {};
+  const values: Record<string, unknown> = {};
+  fields.forEach(([k, v], i) => { names[`#f${i}`] = k; values[`:v${i}`] = v; });
+  const result = await docClient.send(new UpdateCommand({
+    TableName: USERS_TABLE,
+    Key: { userId },
+    UpdateExpression: `SET ${exprParts.join(', ')}`,
+    ExpressionAttributeNames: names,
+    ExpressionAttributeValues: values,
+    ReturnValues: 'ALL_NEW',
+  }));
+  return result.Attributes as User;
+}
+
+export async function listOrdersByUser(userId: string): Promise<Order[]> {
+  const result = await docClient.send(new QueryCommand({
+    TableName: ORDERS_TABLE,
+    IndexName: 'byUserId',
+    KeyConditionExpression: 'userId = :uid',
+    ExpressionAttributeValues: { ':uid': userId },
+  }));
+  const orders = (result.Items || []) as Order[];
+  return orders.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 }
 
 // ─── Legacy stats (for dashboard) ────────────────────────────────────────────

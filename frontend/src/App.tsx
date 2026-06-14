@@ -6,6 +6,7 @@ import AdminOrders from './pages/AdminOrders';
 import ProductEditor from './pages/ProductEditor';
 import CategoryEditor from './pages/CategoryEditor';
 import RequireAdmin from './components/RequireAdmin';
+import OrderHistory from './pages/OrderHistory';
 
 export default function App() {
   return (
@@ -18,6 +19,7 @@ export default function App() {
       <Route path="/admin/editor" element={<RequireAdmin><ProductEditor /></RequireAdmin>} />
       <Route path="/admin/orders" element={<RequireAdmin><AdminOrders /></RequireAdmin>} />
       <Route path="/admin/categories" element={<RequireAdmin><CategoryEditor /></RequireAdmin>} />
+      <Route path="/orders" element={<OrderHistory />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

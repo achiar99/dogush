@@ -1,8 +1,10 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import heConfig from '../../../shared/he.json';
 import { useCart } from '../context/CartContext';
+import { useUser } from '../context/UserContext';
 import CartDrawer from './CartDrawer';
+import AuthModal from './AuthModal';
 
 const { strings, logoImageFile } = heConfig as {
   strings: { logo: string; title: string; subtitle: string };
@@ -11,11 +13,33 @@ const { strings, logoImageFile } = heConfig as {
 
 export default function Header({ showCart = true }: { showCart?: boolean }) {
   const { count } = useCart();
+  const { user, logout } = useUser();
+  const navigate = useNavigate();
   const [cartOpen, setCartOpen] = useState(false);
+  const [authOpen, setAuthOpen] = useState(false);
 
   return (
     <>
       <header className="hero" style={{ position: 'relative' }}>
+        {showCart && (
+          <div style={{ position: 'absolute', top: 16, right: 16, zIndex: 10, display: 'flex', gap: 8 }}>
+            {user ? (
+              <>
+                <button onClick={() => navigate('/orders')} style={ghostBtn}>
+                  📦 ההזמנות שלי
+                </button>
+                <button onClick={logout} style={ghostBtn}>
+                  התנתק
+                </button>
+              </>
+            ) : (
+              <button onClick={() => setAuthOpen(true)} style={ghostBtn}>
+                👤 התחבר / הרשם
+              </button>
+            )}
+          </div>
+        )}
+
         {showCart && <button
           onClick={() => setCartOpen(true)}
           aria-label="סל קניות"
@@ -55,6 +79,14 @@ export default function Header({ showCart = true }: { showCart?: boolean }) {
       </header>
 
       {cartOpen && <CartDrawer onClose={() => setCartOpen(false)} />}
+      {authOpen && <AuthModal onClose={() => setAuthOpen(false)} />}
     </>
   );
 }
+
+const ghostBtn: React.CSSProperties = {
+  background: 'rgba(255,255,255,0.18)', border: '1.5px solid rgba(255,255,255,0.55)',
+  borderRadius: 10, padding: '7px 12px', cursor: 'pointer', color: '#fff',
+  fontWeight: 600, fontSize: '0.85rem', backdropFilter: 'blur(6px)',
+  whiteSpace: 'nowrap',
+};
