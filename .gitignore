@@ -15,6 +15,7 @@ infra/*.tfstate.*
 infra/*.tfstate.backup
 infra/lambda.zip
 infra/.terraform.lock.hcl
+infra/terraform.tfstate.d/
 
 # Lambda build output
 backend/lambda-package/
