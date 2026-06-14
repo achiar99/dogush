@@ -42,7 +42,7 @@ export default function AdminDashboard() {
     if (toDate) params.append('to', toDate);
     const query = params.toString();
     const url = query ? `/api/admin/stats?${query}` : '/api/admin/stats';
-    fetch(`http://localhost:5000${url}`)
+    fetch(`${import.meta.env.VITE_API_BASE_URL || ''}${url}`)
       .then(res => res.json())
       .then(data => setFoods(data))
       .catch(() => setFoods([]));

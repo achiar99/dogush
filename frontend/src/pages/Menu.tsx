@@ -1,72 +1,64 @@
 import { useEffect, useMemo, useState } from 'react';
-import FoodCard from '../components/FoodCard';
+import ItemCard from '../components/ItemCard';
 import Header from '../components/Header';
-import type { Food } from '../api/foods';
+import type { Item } from '../api/items';
+import { fetchItems } from '../api/items';
 import heConfig from '../../../shared/he.json';
 
-type HeFoodItem = {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  category: string;
-  active?: boolean;
-  imageFile?: string;
-};
-
-type HeCategory = {
-  key: string;
-  name: string;
-  priority: number;
-};
+type HeCategory = { key: string; name: string; priority: number };
 
 export default function Menu() {
-  const [menuData, setMenuData] = useState<Record<string, Food[]>>({});
-  const [error, setError] = useState<string | null>(null);
+  const [itemsByCategory, setItemsByCategory] = useState<Record<string, Item[]>>({});
 
-  const { strings, foods: heFoods, categories: heCategories } = heConfig as {
-    strings: { loading: string; errorLoadingMenu: string };
-    foods: HeFoodItem[];
+  const { foods: heItems, categories: heCategories } = heConfig as {
+    foods: Array<{ id: string; name: string; description: string; price: number; category: string; active?: boolean; imageFile?: string }>;
     categories: HeCategory[];
   };
 
-  const sortedCategories = useMemo(() => {
-    return [...heCategories].sort((a, b) => a.priority - b.priority);
-  }, [heCategories]);
+  const sortedCategories = useMemo(
+    () => [...heCategories].sort((a, b) => a.priority - b.priority),
+    [heCategories],
+  );
 
-  const fallbackData = useMemo(() => {
-    const allFoods = heFoods.map((p) => ({
-      id: p.id,
-      name: p.name,
-      description: p.description,
-      price: p.price,
-      category: p.category,
-      active: p.active ?? true,
-      imageUrl: `/images/${p.imageFile}`
-    }));
-    const result: Record<string, Food[]> = {};
+  const fallbackByCategory = useMemo(() => {
+    const result: Record<string, Item[]> = {};
     for (const cat of heCategories) {
-      result[cat.key] = allFoods.filter(f => f.category === cat.key);
+      result[cat.key] = heItems
+        .filter(p => p.category === cat.key)
+        .map(p => ({
+          id: p.id, name: p.name, description: p.description,
+          price: p.price, category: p.category, active: p.active ?? true,
+          imageUrl: `/images/${p.imageFile}`,
+        }));
     }
     return result;
-  }, [heFoods, heCategories]);
+  }, [heItems, heCategories]);
 
   useEffect(() => {
-    setMenuData(fallbackData);
-  }, [fallbackData]);
+    fetchItems()
+      .then(items => {
+        const byCategory: Record<string, Item[]> = {};
+        for (const cat of heCategories) {
+          byCategory[cat.key] = items.filter(i => i.category === cat.key && i.active);
+        }
+        setItemsByCategory(byCategory);
+      })
+      .catch(() => setItemsByCategory(fallbackByCategory));
+  }, []);
+
+  const data = Object.keys(itemsByCategory).length > 0 ? itemsByCategory : fallbackByCategory;
 
   return (
     <div className="page">
       <Header />
-
       {sortedCategories
-        .filter(cat => menuData[cat.key]?.length > 0)
-        .map((cat) => (
+        .filter(cat => (data[cat.key] ?? []).length > 0)
+        .map(cat => (
           <section key={cat.key} className="menuSection">
             <h2 className="menuSection__title">{cat.name}</h2>
             <div className="menuGrid">
-              {menuData[cat.key]?.filter(item => item.active).map((item) => (
-                <FoodCard key={item.id} item={item} />
+              {(data[cat.key] ?? []).map(item => (
+                <ItemCard key={item.id} item={item} />
               ))}
             </div>
           </section>

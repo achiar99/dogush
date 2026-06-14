@@ -7,7 +7,7 @@ const { strings } = heConfig as {
   strings: {
     adminLogoutButton: string;
     adminNavDashboard: string;
-    adminNavFoodEditor: string;
+    adminNavProducts: string;
     adminNavOrders: string;
   };
 };
@@ -124,7 +124,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                 {strings.adminNavDashboard}
               </NavLink>
               <NavLink
-                to="/admin/editor"
+                to="/admin/products"
                 onClick={() => setMenuOpen(false)}
                 style={({ isActive }) => ({
                   padding: '10px 20px',
@@ -137,7 +137,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                   transition: 'all 0.2s',
                 })}
               >
-                {strings.adminNavFoodEditor}
+                {strings.adminNavProducts}
               </NavLink>
               <NavLink
                 to="/admin/orders"

@@ -3,7 +3,7 @@ import Menu from './pages/Menu';
 import AdminLogin from './pages/AdminLogin';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminOrders from './pages/AdminOrders';
-import FoodEditor from './pages/FoodEditor';
+import ProductEditor from './pages/ProductEditor';
 
 export default function App() {
   return (
@@ -12,7 +12,8 @@ export default function App() {
       <Route path="/menu" element={<Menu />} />
       <Route path="/admin" element={<AdminLogin />} />
       <Route path="/admin/dashboard" element={<AdminDashboard />} />
-      <Route path="/admin/editor" element={<FoodEditor />} />
+      <Route path="/admin/products" element={<ProductEditor />} />
+      <Route path="/admin/editor" element={<ProductEditor />} />
       <Route path="/admin/orders" element={<AdminOrders />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

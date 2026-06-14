@@ -1,5 +1,5 @@
 {
-  "name": "dog-store",
+  "name": "pet-store",
   "private": true,
   "version": "0.0.0",
   "workspaces": [

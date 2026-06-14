@@ -1,5 +1,5 @@
 {
-  "name": "dog-food-store-backend",
+  "name": "pet-store-backend",
   "private": true,
   "version": "0.0.0",
   "type": "commonjs",
@@ -8,11 +8,15 @@
     "build": "tsc -p tsconfig.json",
     "start": "node dist/index.js",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "seed-admin": "tsx src/seedAdmin.ts"
+    "seed-admin": "tsx src/seedAdmin.ts",
+    "seed-products": "tsx src/seedProducts.ts"
   },
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.1014.0",
+    "@aws-sdk/client-s3": "^3.1014.0",
     "@aws-sdk/lib-dynamodb": "^3.1014.0",
+    "@aws-sdk/s3-request-presigner": "^3.1014.0",
+    "@vendia/serverless-express": "^4.10.4",
     "bcryptjs": "^3.0.3",
     "cors": "latest",
     "express": "latest",

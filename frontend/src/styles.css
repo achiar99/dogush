@@ -123,7 +123,7 @@ a {
   }
 }
 
-.pizza-card {
+.item-card {
   background: #ffffff;
   border: 1px solid rgba(0, 0, 0, 0.06);
   border-radius: 16px;
@@ -131,7 +131,7 @@ a {
   box-shadow: 0 10px 24px rgba(0, 0, 0, 0.06);
 }
 
-.pizza-card__imageWrap {
+.item-card__imageWrap {
   height: 160px;
   background: #f4f0e2;
   display: flex;
@@ -139,25 +139,25 @@ a {
   justify-content: center;
 }
 
-.pizza-card__image {
+.item-card__image {
   width: 92%;
   height: 86%;
   object-fit: cover;
   border-radius: 12px;
 }
 
-.pizza-card__content {
+.item-card__content {
   padding: 14px 14px 12px;
   text-align: center;
 }
 
-.pizza-card__name {
+.item-card__name {
   margin: 0;
   font-size: 18px;
   font-weight: 800;
 }
 
-.pizza-card__desc {
+.item-card__desc {
   margin: 8px 0 0;
   font-size: 13px;
   color: rgba(0, 0, 0, 0.75);
@@ -165,7 +165,7 @@ a {
   min-height: 34px;
 }
 
-.pizza-card__footer {
+.item-card__footer {
   margin-top: 12px;
   display: flex;
   flex-direction: column;
@@ -173,12 +173,12 @@ a {
   align-items: center;
 }
 
-.pizza-card__price {
+.item-card__price {
   font-weight: 900;
   font-size: 18px;
 }
 
-.pizza-card__button {
+.item-card__button {
   height: 34px;
   padding: 0 18px;
   border-radius: 999px;
@@ -188,7 +188,7 @@ a {
   font-weight: 700;
 }
 
-.pizza-card__button:hover {
+.item-card__button:hover {
   background: rgba(0, 0, 0, 0.04);
 }
 
