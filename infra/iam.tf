@@ -61,6 +61,20 @@ resource "aws_iam_role_policy" "lambda_s3" {
   })
 }
 
+resource "aws_iam_role_policy" "lambda_sns" {
+  name = "${local.prefix}-lambda-sns"
+  role = aws_iam_role.lambda.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect   = "Allow"
+      Action   = ["sns:Publish"]
+      Resource = aws_sns_topic.new_order.arn
+    }]
+  })
+}
+
 # ─── Admin IAM user for store management ──────────────────────────────────────
 resource "aws_iam_user" "admin" {
   name = "${local.prefix}-admin"

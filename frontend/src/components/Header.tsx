@@ -34,7 +34,8 @@ export default function Header({
     <>
       <header className="hero" style={{ position: 'relative' }}>
         {showCart && (
-          <div style={{ position: 'absolute', top: 16, right: 16, zIndex: 10, display: 'flex', gap: 8 }}>
+          <div style={{ position: 'absolute', top: 16, right: 16, zIndex: 10, display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end', maxWidth: '60vw' }}>
+            <button onClick={() => navigate('/track')} style={ghostBtn}>📦 מעקב הזמנה</button>
             {user ? (
               <>
                 <button onClick={() => navigate('/orders')} style={ghostBtn}>

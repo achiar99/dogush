@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import ItemCard from '../components/ItemCard';
 import Header from '../components/Header';
+import WhatsAppButton from '../components/WhatsAppButton';
 import type { Item } from '../api/items';
 import heConfig from '../../../shared/he.json';
 
@@ -71,6 +72,7 @@ export default function Menu() {
           </div>
         </section>
       ))}
+      <WhatsAppButton />
     </div>
   );
 }

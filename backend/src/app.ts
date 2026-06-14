@@ -23,11 +23,29 @@ import {
   createUser,
   updateUser,
   listOrdersByUser,
+  getOrder,
 } from './dynamodb';
 import { getPresignedUploadUrl } from './s3';
+import { SNSClient, PublishCommand } from '@aws-sdk/client-sns';
 import heConfig from '../../shared/he.json';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
+
+const snsClient = new SNSClient({ region: process.env.AWS_REGION || 'eu-north-1' });
+
+async function notifyNewOrder(order: { orderId: string; customer: string; total: number; items: unknown[] }) {
+  const topicArn = process.env.NEW_ORDER_TOPIC_ARN;
+  if (!topicArn) return;
+  try {
+    await snsClient.send(new PublishCommand({
+      TopicArn: topicArn,
+      Subject: `הזמנה חדשה #${order.orderId}`,
+      Message: `הזמנה חדשה התקבלה!\n\nמספר: #${order.orderId}\nלקוח: ${order.customer}\nסכום: ₪${order.total}\nפריטים: ${order.items.length}`,
+    }));
+  } catch (e) {
+    console.error('SNS notify error:', e);
+  }
+}
 
 export const app = express();
 
@@ -121,6 +139,7 @@ app.post('/api/orders', async (req, res) => {
     }
     const userClaim = getRequestUser(req);
     const order = await createOrder({ customer, address, email, items, total, ...(userClaim ? { userId: userClaim.userId } : {}) });
+    notifyNewOrder(order);
     res.status(201).json(order);
   } catch (error) {
     console.error('Create order error:', error);
@@ -191,6 +210,18 @@ app.get('/api/orders/my', requireUser, async (req, res) => {
   } catch (error) {
     console.error('My orders error:', error);
     res.status(500).json({ error: 'Failed to fetch orders' });
+  }
+});
+
+app.get('/api/orders/:id', async (req, res) => {
+  try {
+    const order = await getOrder(String(req.params.id));
+    if (!order) { res.status(404).json({ error: 'Not found' }); return; }
+    // Return only safe fields (no email for unauthenticated requests)
+    const { email: _email, userId: _userId, ...safe } = order as any;
+    res.json(safe);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch order' });
   }
 });
 

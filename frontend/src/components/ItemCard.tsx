@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import type { Item } from '../api/items';
 import heConfig from '../../../shared/he.json';
 import { useCart } from '../context/CartContext';
@@ -11,9 +12,12 @@ type Props = { item: Item; onOrderNow?: () => void };
 
 export default function ItemCard({ item, onOrderNow }: Props) {
   const { add } = useCart();
+  const [addedFlash, setAddedFlash] = useState(false);
 
   const handleAddToCart = () => {
     add({ id: item.id, name: item.name, price: item.price, imageFile: item.imageFile });
+    setAddedFlash(true);
+    setTimeout(() => setAddedFlash(false), 1200);
   };
 
   const handleOrderNow = () => {
@@ -21,9 +25,16 @@ export default function ItemCard({ item, onOrderNow }: Props) {
     onOrderNow?.();
   };
 
+  const badge = (item as any).badge as 'new' | 'sale' | undefined;
+
   return (
     <article className="item-card" aria-label={item.name}>
       <div className="item-card__imageWrap">
+        {badge && (
+          <span className={`item-card__badge item-card__badge--${badge}`}>
+            {badge === 'new' ? 'חדש' : 'מבצע'}
+          </span>
+        )}
         {item.imageFile
           ? <img className="item-card__image" src={item.imageFile} alt={item.name} />
           : <span style={{ fontSize: 52 }}>🐾</span>
@@ -45,11 +56,11 @@ export default function ItemCard({ item, onOrderNow }: Props) {
               {strings.orderNowButton}
             </button>
             <button
-              className="item-card__button item-card__button--secondary"
+              className={`item-card__button item-card__button--secondary${addedFlash ? ' item-card__button--added' : ''}`}
               type="button"
               onClick={handleAddToCart}
             >
-              הוסף לסל 🛒
+              {addedFlash ? '✓ נוסף לסל' : 'הוסף לסל 🛒'}
             </button>
           </div>
         </div>

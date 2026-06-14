@@ -34,6 +34,7 @@ interface Product {
   category: string;
   active: boolean;
   imageFile?: string;
+  badge?: 'new' | 'sale' | '';
 }
 
 type DraftProduct = Omit<Product, 'id'> & { id?: string };
@@ -52,6 +53,7 @@ function emptyProduct(categories: Category[]): DraftProduct {
     category: categories[0]?.key ?? '',
     active: true,
     imageFile: '',
+    badge: '',
   };
 }
 
@@ -317,6 +319,14 @@ export default function ProductEditor() {
                 />
                 {strings.tableHeaderActive}
               </label>
+            </Field>
+
+            <Field label="תגית">
+              <select value={draft.badge ?? ''} onChange={e => handleChange('badge', e.target.value)} style={inputStyle}>
+                <option value="">ללא תגית</option>
+                <option value="new">חדש 🔵</option>
+                <option value="sale">מבצע 🔴</option>
+              </select>
             </Field>
 
             {error && (

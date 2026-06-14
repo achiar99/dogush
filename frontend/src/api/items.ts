@@ -8,6 +8,7 @@ export interface Item {
   imageFile?: string;
   category: string;
   active: boolean;
+  badge?: 'new' | 'sale';
 }
 
 export async function fetchItems(): Promise<Item[]> {

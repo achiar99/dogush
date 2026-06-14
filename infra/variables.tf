@@ -33,3 +33,15 @@ variable "admin_password" {
   type        = string
   sensitive   = true
 }
+
+variable "notification_email" {
+  description = "Email to notify on new orders (leave empty to disable)"
+  type        = string
+  default     = ""
+}
+
+variable "whatsapp_phone" {
+  description = "WhatsApp phone number in international format e.g. 972501234567"
+  type        = string
+  default     = ""
+}
