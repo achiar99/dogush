@@ -35,7 +35,11 @@ export default function CartDrawer({ onClose, initialCheckout }: { onClose: () =
           total,
         }),
       });
-      if (!res.ok) throw new Error('שגיאה בשליחת הזמנה');
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        if (body.error === 'out_of_stock') throw new Error('מוצר אחד או יותר אזל מהמלאי. רענן את הדף ונסה שנית.');
+        throw new Error('שגיאה בשליחת הזמנה');
+      }
       clear();
       setDone(true);
     } catch (e: any) {

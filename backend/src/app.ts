@@ -24,6 +24,7 @@ import {
   updateUser,
   listOrdersByUser,
   getOrder,
+  OutOfStockError,
 } from './dynamodb';
 import { getPresignedUploadUrl } from './s3';
 import { SNSClient, PublishCommand } from '@aws-sdk/client-sns';
@@ -142,6 +143,10 @@ app.post('/api/orders', async (req, res) => {
     notifyNewOrder(order);
     res.status(201).json(order);
   } catch (error) {
+    if (error instanceof OutOfStockError) {
+      res.status(409).json({ error: 'out_of_stock', productId: error.productId });
+      return;
+    }
     console.error('Create order error:', error);
     res.status(500).json({ error: 'Failed to create order' });
   }

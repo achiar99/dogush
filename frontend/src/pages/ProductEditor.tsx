@@ -35,6 +35,7 @@ interface Product {
   active: boolean;
   imageFile?: string;
   badge?: 'new' | 'sale' | '';
+  stock?: number;
 }
 
 type DraftProduct = Omit<Product, 'id'> & { id?: string };
@@ -54,6 +55,7 @@ function emptyProduct(categories: Category[]): DraftProduct {
     active: true,
     imageFile: '',
     badge: '',
+    stock: undefined,
   };
 }
 
@@ -203,6 +205,7 @@ export default function ProductEditor() {
               <th style={{ textAlign: 'right', padding: 12 }}>{strings.tableHeaderName}</th>
               <th style={{ textAlign: 'right', padding: 12 }}>{strings.tableHeaderCategory}</th>
               <th style={{ textAlign: 'right', padding: 12 }}>{strings.tableHeaderPrice}</th>
+              <th style={{ textAlign: 'center', padding: 12 }}>מלאי</th>
               <th style={{ textAlign: 'center', padding: 12 }}>{strings.tableHeaderActive}</th>
               <th style={{ padding: 12 }}></th>
             </tr>
@@ -223,6 +226,14 @@ export default function ProductEditor() {
                 </td>
                 <td style={{ padding: 12 }}>{getCategoryName(product.category)}</td>
                 <td style={{ padding: 12 }}>{product.price} ₪</td>
+                <td style={{ textAlign: 'center', padding: 12 }}>
+                  {product.stock === undefined || product.stock === null
+                    ? <span style={{ color: '#aaa' }}>—</span>
+                    : product.stock === 0
+                      ? <span style={{ color: '#dc3545', fontWeight: 700 }}>אזל</span>
+                      : <span style={{ fontWeight: 600 }}>{product.stock}</span>
+                  }
+                </td>
                 <td style={{ textAlign: 'center', padding: 12 }}>{product.active ? '✓' : '✗'}</td>
                 <td style={{ padding: 12, textAlign: 'center' }}>
                   <button
@@ -269,6 +280,17 @@ export default function ProductEditor() {
                 onChange={e => handleChange('price', Number(e.target.value))}
                 style={inputStyle}
                 min={0}
+              />
+            </Field>
+
+            <Field label="מלאי (יחידות)">
+              <input
+                type="number"
+                value={draft.stock ?? ''}
+                onChange={e => handleChange('stock', e.target.value === '' ? undefined as any : Number(e.target.value))}
+                style={inputStyle}
+                min={0}
+                placeholder="ריק = ללא מעקב מלאי"
               />
             </Field>
 

@@ -9,6 +9,7 @@ export interface Item {
   category: string;
   active: boolean;
   badge?: 'new' | 'sale';
+  stock?: number;
 }
 
 export async function fetchItems(): Promise<Item[]> {

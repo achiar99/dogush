@@ -7,6 +7,7 @@ import {
   DeleteCommand,
   ScanCommand,
   QueryCommand,
+  TransactWriteCommand,
 } from '@aws-sdk/lib-dynamodb';
 import { randomUUID } from 'crypto';
 
@@ -45,6 +46,8 @@ export interface Product {
   category: string;
   active: boolean;
   imageFile?: string;
+  badge?: string;
+  stock?: number;
 }
 
 export async function listProducts(includeInactive = false): Promise<Product[]> {
@@ -111,6 +114,12 @@ export interface Order {
   createdAt: string;
 }
 
+export class OutOfStockError extends Error {
+  constructor(public productId: string) {
+    super(`out_of_stock:${productId}`);
+  }
+}
+
 export async function createOrder(data: Omit<Order, 'orderId' | 'status' | 'createdAt'>): Promise<Order> {
   const n = await nextCounter('orders');
   const order: Order = {
@@ -119,7 +128,59 @@ export async function createOrder(data: Omit<Order, 'orderId' | 'status' | 'crea
     status: 'open',
     createdAt: new Date().toISOString(),
   };
-  await docClient.send(new PutCommand({ TableName: ORDERS_TABLE, Item: order }));
+
+  // Fetch products to check which ones have stock tracking
+  const productResults = await Promise.all(
+    data.items.map(item => getProduct(item.id)),
+  );
+
+  const stockItems = data.items.filter((item, i) => {
+    const p = productResults[i];
+    return p && typeof p.stock === 'number';
+  });
+
+  if (stockItems.length === 0) {
+    // No stock tracking — simple put
+    await docClient.send(new PutCommand({ TableName: ORDERS_TABLE, Item: order }));
+    return order;
+  }
+
+  // Atomic: put order + decrement stock for all tracked items in one transaction
+  try {
+    await docClient.send(new TransactWriteCommand({
+      TransactItems: [
+        {
+          Put: {
+            TableName: ORDERS_TABLE,
+            Item: order,
+          },
+        },
+        ...stockItems.map(item => ({
+          Update: {
+            TableName: PRODUCTS_TABLE,
+            Key: { id: item.id },
+            UpdateExpression: 'SET #stock = #stock - :qty',
+            ConditionExpression: '#stock >= :qty',
+            ExpressionAttributeNames: { '#stock': 'stock' },
+            ExpressionAttributeValues: { ':qty': item.quantity },
+          },
+        })),
+      ],
+    }));
+  } catch (err: any) {
+    // TransactionCanceledException — find which item caused it
+    if (err.name === 'TransactionCanceledException') {
+      const reasons: Array<{ Code?: string }> = err.CancellationReasons ?? [];
+      // index 0 = order Put, indices 1+ = stock Updates
+      for (let i = 0; i < stockItems.length; i++) {
+        if (reasons[i + 1]?.Code === 'ConditionalCheckFailed') {
+          throw new OutOfStockError(stockItems[i].id);
+        }
+      }
+    }
+    throw err;
+  }
+
   return order;
 }
 

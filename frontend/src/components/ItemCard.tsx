@@ -25,7 +25,8 @@ export default function ItemCard({ item, onOrderNow }: Props) {
     onOrderNow?.();
   };
 
-  const badge = (item as any).badge as 'new' | 'sale' | undefined;
+  const badge = item.badge as 'new' | 'sale' | undefined;
+  const outOfStock = typeof item.stock === 'number' && item.stock === 0;
 
   return (
     <article className="item-card" aria-label={item.name}>
@@ -47,22 +48,24 @@ export default function ItemCard({ item, onOrderNow }: Props) {
           <div className="item-card__price">
             {currencySymbol}{item.price}
           </div>
-          <div style={{ display: 'flex', gap: 8, flexDirection: 'column' }}>
-            <button
-              className="item-card__button"
-              type="button"
-              onClick={handleOrderNow}
-            >
-              {strings.orderNowButton}
-            </button>
-            <button
-              className={`item-card__button item-card__button--secondary${addedFlash ? ' item-card__button--added' : ''}`}
-              type="button"
-              onClick={handleAddToCart}
-            >
-              {addedFlash ? '✓ נוסף לסל' : 'הוסף לסל 🛒'}
-            </button>
-          </div>
+          {outOfStock ? (
+            <span style={{ padding: '6px 14px', borderRadius: 999, backgroundColor: '#f3f3f3', color: '#aaa', fontWeight: 700, fontSize: '0.85rem' }}>
+              אזל מהמלאי
+            </span>
+          ) : (
+            <div style={{ display: 'flex', gap: 8, flexDirection: 'column' }}>
+              <button className="item-card__button" type="button" onClick={handleOrderNow}>
+                {strings.orderNowButton}
+              </button>
+              <button
+                className={`item-card__button item-card__button--secondary${addedFlash ? ' item-card__button--added' : ''}`}
+                type="button"
+                onClick={handleAddToCart}
+              >
+                {addedFlash ? '✓ נוסף לסל' : 'הוסף לסל 🛒'}
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </article>
