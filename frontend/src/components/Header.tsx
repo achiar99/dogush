@@ -11,11 +11,23 @@ const { strings, logoImageFile } = heConfig as {
   logoImageFile?: string;
 };
 
-export default function Header({ showCart = true }: { showCart?: boolean }) {
+export default function Header({
+  showCart = true,
+  cartOpen: cartOpenProp,
+  onCartOpenChange,
+}: {
+  showCart?: boolean;
+  cartOpen?: boolean;
+  onCartOpenChange?: (open: boolean) => void;
+}) {
   const { count } = useCart();
   const { user, logout } = useUser();
   const navigate = useNavigate();
-  const [cartOpen, setCartOpen] = useState(false);
+  const [cartOpenInternal, setCartOpenInternal] = useState(false);
+  const cartOpen = cartOpenProp !== undefined ? cartOpenProp : cartOpenInternal;
+  const setCartOpen = (v: boolean) => { setCartOpenInternal(v); onCartOpenChange?.(v); };
+  // When cart is opened from outside (onCartOpenChange / Order Now), go straight to checkout
+  const cartFromOrderNow = cartOpenProp === true && cartOpenInternal === false;
   const [authOpen, setAuthOpen] = useState(false);
 
   return (
@@ -78,7 +90,7 @@ export default function Header({ showCart = true }: { showCart?: boolean }) {
         <p className="hero__subtitle">{strings.subtitle}</p>
       </header>
 
-      {cartOpen && <CartDrawer onClose={() => setCartOpen(false)} />}
+      {cartOpen && <CartDrawer onClose={() => setCartOpen(false)} initialCheckout={cartFromOrderNow} />}
       {authOpen && <AuthModal onClose={() => setAuthOpen(false)} />}
     </>
   );

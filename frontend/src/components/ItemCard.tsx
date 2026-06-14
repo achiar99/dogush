@@ -7,10 +7,19 @@ const { strings, currencySymbol } = heConfig as {
   currencySymbol: string;
 };
 
-type Props = { item: Item };
+type Props = { item: Item; onOrderNow?: () => void };
 
-export default function ItemCard({ item }: Props) {
+export default function ItemCard({ item, onOrderNow }: Props) {
   const { add } = useCart();
+
+  const handleAddToCart = () => {
+    add({ id: item.id, name: item.name, price: item.price, imageFile: item.imageFile });
+  };
+
+  const handleOrderNow = () => {
+    add({ id: item.id, name: item.name, price: item.price, imageFile: item.imageFile });
+    onOrderNow?.();
+  };
 
   return (
     <article className="item-card" aria-label={item.name}>
@@ -27,13 +36,22 @@ export default function ItemCard({ item }: Props) {
           <div className="item-card__price">
             {currencySymbol}{item.price}
           </div>
-          <button
-            className="item-card__button"
-            type="button"
-            onClick={() => add({ id: item.id, name: item.name, price: item.price, imageFile: item.imageFile })}
-          >
-            {strings.orderNowButton}
-          </button>
+          <div style={{ display: 'flex', gap: 8, flexDirection: 'column' }}>
+            <button
+              className="item-card__button"
+              type="button"
+              onClick={handleOrderNow}
+            >
+              {strings.orderNowButton}
+            </button>
+            <button
+              className="item-card__button item-card__button--secondary"
+              type="button"
+              onClick={handleAddToCart}
+            >
+              הוסף לסל 🛒
+            </button>
+          </div>
         </div>
       </div>
     </article>

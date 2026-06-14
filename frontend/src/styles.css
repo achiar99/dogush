@@ -192,6 +192,16 @@ a {
   background: rgba(0, 0, 0, 0.04);
 }
 
+.item-card__button--secondary {
+  background: #c15f2a;
+  color: #fff;
+  border-color: #c15f2a;
+}
+
+.item-card__button--secondary:hover {
+  background: #a84e22;
+}
+
 .menuLoading,
 .menuError {
   max-width: 900px;

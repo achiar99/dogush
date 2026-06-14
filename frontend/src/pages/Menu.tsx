@@ -17,6 +17,7 @@ export default function Menu() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [cartOpen, setCartOpen] = useState(false);
 
   useEffect(() => {
     Promise.all([
@@ -59,13 +60,13 @@ export default function Menu() {
 
   return (
     <div className="page">
-      <Header />
+      <Header cartOpen={cartOpen} onCartOpenChange={setCartOpen} />
       {visibleCategories.map(cat => (
         <section key={cat.key} className="menuSection">
           <h2 className="menuSection__title">{cat.name}</h2>
           <div className="menuGrid">
             {(byCategory[cat.key] ?? []).map(item => (
-              <ItemCard key={item.id} item={item} />
+              <ItemCard key={item.id} item={item} onOrderNow={() => setCartOpen(true)} />
             ))}
           </div>
         </section>

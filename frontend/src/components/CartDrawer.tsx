@@ -4,10 +4,10 @@ import { useUser } from '../context/UserContext';
 
 const API = import.meta.env.VITE_API_BASE_URL || '';
 
-export default function CartDrawer({ onClose }: { onClose: () => void }) {
+export default function CartDrawer({ onClose, initialCheckout }: { onClose: () => void; initialCheckout?: boolean }) {
   const { items, remove, updateQty, clear, total } = useCart();
   const { user, token } = useUser();
-  const [checkout, setCheckout] = useState(false);
+  const [checkout, setCheckout] = useState(initialCheckout ?? false);
   const [form, setForm] = useState({
     customer: user?.name || '',
     address: user?.address || '',
