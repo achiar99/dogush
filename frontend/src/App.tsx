@@ -5,6 +5,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import AdminOrders from './pages/AdminOrders';
 import ProductEditor from './pages/ProductEditor';
 import CategoryEditor from './pages/CategoryEditor';
+import RequireAdmin from './components/RequireAdmin';
 
 export default function App() {
   return (
@@ -12,11 +13,11 @@ export default function App() {
       <Route path="/" element={<Menu />} />
       <Route path="/menu" element={<Menu />} />
       <Route path="/admin" element={<AdminLogin />} />
-      <Route path="/admin/dashboard" element={<AdminDashboard />} />
-      <Route path="/admin/products" element={<ProductEditor />} />
-      <Route path="/admin/editor" element={<ProductEditor />} />
-      <Route path="/admin/orders" element={<AdminOrders />} />
-      <Route path="/admin/categories" element={<CategoryEditor />} />
+      <Route path="/admin/dashboard" element={<RequireAdmin><AdminDashboard /></RequireAdmin>} />
+      <Route path="/admin/products" element={<RequireAdmin><ProductEditor /></RequireAdmin>} />
+      <Route path="/admin/editor" element={<RequireAdmin><ProductEditor /></RequireAdmin>} />
+      <Route path="/admin/orders" element={<RequireAdmin><AdminOrders /></RequireAdmin>} />
+      <Route path="/admin/categories" element={<RequireAdmin><CategoryEditor /></RequireAdmin>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

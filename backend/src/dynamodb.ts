@@ -111,9 +111,10 @@ export interface Order {
 }
 
 export async function createOrder(data: Omit<Order, 'orderId' | 'status' | 'createdAt'>): Promise<Order> {
+  const n = await nextCounter('orders');
   const order: Order = {
     ...data,
-    orderId: randomUUID(),
+    orderId: formatOrderId(n),
     status: 'open',
     createdAt: new Date().toISOString(),
   };
@@ -166,6 +167,25 @@ export async function updateOrder(orderId: string, updates: Partial<Order>): Pro
     }),
   );
   return result.Attributes as Order;
+}
+
+// ─── Counters ─────────────────────────────────────────────────────────────────
+const COUNTERS_TABLE = process.env.COUNTERS_TABLE || `pet-store-${ENV}-Counters`;
+
+async function nextCounter(name: string): Promise<number> {
+  const result = await docClient.send(new UpdateCommand({
+    TableName: COUNTERS_TABLE,
+    Key: { name },
+    UpdateExpression: 'ADD #val :one',
+    ExpressionAttributeNames: { '#val': 'value' },
+    ExpressionAttributeValues: { ':one': 1 },
+    ReturnValues: 'UPDATED_NEW',
+  }));
+  return result.Attributes!.value as number;
+}
+
+function formatOrderId(n: number): string {
+  return String(n).padStart(7, '0');
 }
 
 // ─── Categories ───────────────────────────────────────────────────────────────

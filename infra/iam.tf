@@ -41,6 +41,7 @@ resource "aws_iam_role_policy" "lambda_dynamodb" {
         aws_dynamodb_table.users.arn,
         "${aws_dynamodb_table.users.arn}/index/*",
         aws_dynamodb_table.categories.arn,
+        aws_dynamodb_table.counters.arn,
       ]
     }]
   })

@@ -28,11 +28,23 @@ function getToken() {
 
 export default function AdminOrders() {
   const [orders, setOrders] = useState<Order[]>([]);
+  const [productMap, setProductMap] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    fetch(`${API}/api/admin/products`, { headers: { Authorization: `Bearer ${getToken()}` } })
+      .then(r => r.json())
+      .then(prods => {
+        const map: Record<string, string> = {};
+        for (const p of (Array.isArray(prods) ? prods : [])) map[p.id] = p.name;
+        setProductMap(map);
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     setLoading(true);
@@ -160,6 +172,18 @@ export default function AdminOrders() {
                 <div style={{ padding: 8, backgroundColor: '#f5f5f5', borderRadius: 4 }}>{value}</div>
               </div>
             ))}
+
+            <div style={{ marginBottom: 12 }}>
+              <label style={{ display: 'block', marginBottom: 6, color: '#666', fontSize: '0.9rem' }}>מוצרים</label>
+              <div style={{ backgroundColor: '#f5f5f5', borderRadius: 4, overflow: 'hidden' }}>
+                {(selectedOrder.items || []).map((item, i) => (
+                  <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 12px', borderBottom: i < selectedOrder.items.length - 1 ? '1px solid #e0e0e0' : 'none', direction: 'rtl' }}>
+                    <span>{productMap[item.id] || item.id}</span>
+                    <span style={{ color: '#555' }}>× {item.quantity}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
 
             <div style={{ marginBottom: 16 }}>
               <label style={{ display: 'block', marginBottom: 4, color: '#666', fontSize: '0.9rem' }}>סטטוס</label>

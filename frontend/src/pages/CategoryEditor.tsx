@@ -23,6 +23,7 @@ const inputStyle: React.CSSProperties = {
 
 export default function CategoryEditor() {
   const [categories, setCategories] = useState<Category[]>([]);
+  const [usedKeys, setUsedKeys] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [name, setName] = useState('');
@@ -31,12 +32,21 @@ export default function CategoryEditor() {
   const [savedKey, setSavedKey] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch(`${API}/api/admin/categories`, {
-      headers: { Authorization: `Bearer ${getToken()}` },
-    })
-      .then(r => r.json())
-      .then(data => setCategories(Array.isArray(data) ? data : []))
-      .catch(() => setCategories([]))
+    const headers = { Authorization: `Bearer ${getToken()}` };
+    Promise.all([
+      fetch(`${API}/api/admin/categories`, { headers }).then(r => r.json()),
+      fetch(`${API}/api/admin/products`, { headers }).then(r => r.json()),
+    ])
+      .then(([cats, prods]) => {
+        setCategories(Array.isArray(cats) ? cats : []);
+        const active = new Set<string>(
+          (Array.isArray(prods) ? prods : [])
+            .filter((p: any) => p.active)
+            .map((p: any) => p.category as string)
+        );
+        setUsedKeys(active);
+      })
+      .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
 
@@ -52,7 +62,7 @@ export default function CategoryEditor() {
   };
 
   const handleAdd = async () => {
-    if (!name.trim()) { setError('שם קט��וריה חובה'); return; }
+    if (!name.trim()) { setError('שם קטגוריה חובה'); return; }
     setSaving(true);
     setError(null);
     try {
@@ -77,10 +87,11 @@ export default function CategoryEditor() {
     }
   };
 
-  const handleDelete = async (key: string) => {
-    if (!confirm(`למחוק את הקטגוריה "${key}"?`)) return;
+  const handleDelete = async (cat: Category) => {
+    if (!confirm(`למחוק את הקטגוריה "${cat.name}"?`)) return;
+    setError(null);
     try {
-      const res = await fetch(`${API}/api/admin/categories/${encodeURIComponent(key)}`, {
+      const res = await fetch(`${API}/api/admin/categories/${encodeURIComponent(cat.key)}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${getToken()}` },
       });
@@ -89,7 +100,7 @@ export default function CategoryEditor() {
         setError(body.error ?? 'שגיאה במחיקה');
         return;
       }
-      setCategories(prev => prev.filter(c => c.key !== key));
+      setCategories(prev => prev.filter(c => c.key !== cat.key));
     } catch {
       setError('שגיאה במחיקה');
     }
@@ -107,6 +118,12 @@ export default function CategoryEditor() {
         </button>
       </div>
 
+      {error && (
+        <div style={{ marginBottom: 16, padding: 10, backgroundColor: '#fff3f3', border: '1px solid #f5c6cb', borderRadius: 4, color: '#721c24', fontSize: '0.9rem', direction: 'rtl' }}>
+          {error}
+        </div>
+      )}
+
       {loading ? (
         <p style={{ direction: 'rtl' }}>טוען...</p>
       ) : (
@@ -118,24 +135,42 @@ export default function CategoryEditor() {
             </tr>
           </thead>
           <tbody>
-            {categories.map(cat => (
-              <tr key={cat.key} style={{ borderBottom: '1px solid #eee', backgroundColor: '#d4edda' }}>
-                <td style={{ padding: 12 }}>
-                  {cat.name}
-                  {savedKey === cat.key && (
-                    <span style={{ marginRight: 8, color: '#28a745', fontSize: '0.85rem' }}>נשמר!</span>
-                  )}
-                </td>
-                <td style={{ padding: 12, textAlign: 'center' }}>
-                  <button
-                    onClick={() => handleDelete(cat.key)}
-                    style={{ padding: '4px 14px', backgroundColor: '#dc3545', color: '#fff', border: 'none', borderRadius: 4, cursor: 'pointer', fontSize: '0.85rem' }}
-                  >
-                    מחק
-                  </button>
-                </td>
-              </tr>
-            ))}
+            {categories.map(cat => {
+              const hasProducts = usedKeys.has(cat.key);
+              return (
+                <tr key={cat.key} style={{ borderBottom: '1px solid #eee', backgroundColor: '#d4edda' }}>
+                  <td style={{ padding: 12 }}>
+                    {cat.name}
+                    {savedKey === cat.key && (
+                      <span style={{ marginRight: 8, color: '#28a745', fontSize: '0.85rem' }}>נשמר!</span>
+                    )}
+                    {hasProducts && (
+                      <span style={{ marginRight: 10, fontSize: '0.8rem', color: '#856404', backgroundColor: '#fff3cd', border: '1px solid #ffc107', borderRadius: 4, padding: '2px 8px' }}>
+                        יש מוצרים פעילים
+                      </span>
+                    )}
+                  </td>
+                  <td style={{ padding: 12, textAlign: 'center' }}>
+                    <button
+                      onClick={() => !hasProducts && handleDelete(cat)}
+                      disabled={hasProducts}
+                      title={hasProducts ? 'לא ניתן למחוק קטגוריה עם מוצרים פעילים' : 'מחק קטגוריה'}
+                      style={{
+                        padding: '4px 14px',
+                        backgroundColor: hasProducts ? '#ccc' : '#dc3545',
+                        color: hasProducts ? '#888' : '#fff',
+                        border: 'none',
+                        borderRadius: 4,
+                        cursor: hasProducts ? 'not-allowed' : 'pointer',
+                        fontSize: '0.85rem',
+                      }}
+                    >
+                      מחק
+                    </button>
+                  </td>
+                </tr>
+              );
+            })}
             {categories.length === 0 && (
               <tr>
                 <td colSpan={2} style={{ padding: 20, textAlign: 'center', color: '#888' }}>אין קטגוריות עדיין</td>

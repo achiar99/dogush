@@ -51,7 +51,7 @@ export default function AdminLogin() {
 
   return (
     <div className="page">
-      <Header />
+      <Header showCart={false} />
       <div style={{ maxWidth: 400, margin: '40px auto', padding: 20 }}>
         <h1 style={{ textAlign: 'center' }}>{strings.adminLoginTitle}</h1>
         <form onSubmit={handleSubmit}>

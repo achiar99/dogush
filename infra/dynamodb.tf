@@ -59,6 +59,17 @@ resource "aws_dynamodb_table" "orders" {
   }
 }
 
+resource "aws_dynamodb_table" "counters" {
+  name         = "${local.prefix}-Counters"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "name"
+
+  attribute {
+    name = "name"
+    type = "S"
+  }
+}
+
 resource "aws_dynamodb_table" "categories" {
   name         = "${local.prefix}-Categories"
   billing_mode = "PAY_PER_REQUEST"

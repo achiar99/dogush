@@ -42,6 +42,7 @@ resource "aws_lambda_function" "backend" {
       ADMINS_TABLE                        = aws_dynamodb_table.admins.name
       USERS_TABLE                         = aws_dynamodb_table.users.name
       CATEGORIES_TABLE                    = aws_dynamodb_table.categories.name
+      COUNTERS_TABLE                      = aws_dynamodb_table.counters.name
       IMAGES_BUCKET                       = aws_s3_bucket.images.bucket
       IMAGES_BASE_URL                     = "https://${aws_s3_bucket.images.bucket_regional_domain_name}"
     }

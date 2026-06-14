@@ -22,12 +22,13 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   const [menuOpen, setMenuOpen] = useState(false);
 
   const handleLogout = () => {
+    localStorage.removeItem('adminToken');
     navigate('/admin');
   };
 
   return (
     <div className="page">
-      <Header />
+      <Header showCart={false} />
       <div style={{ padding: 20 }}>
         <style>{`
           @media (max-width: 767px) {
