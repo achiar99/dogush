@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import AdminLayout from '../components/AdminLayout';
 import heConfig from '../../../shared/he.json';
+import { adminFetch } from '../api/adminFetch';
 
 const { strings } = heConfig as {
   strings: {
@@ -28,12 +29,6 @@ interface Category {
   name: string;
 }
 
-const API = import.meta.env.VITE_API_BASE_URL || '';
-
-function getToken() {
-  return localStorage.getItem('adminToken') || '';
-}
-
 export default function AdminDashboard() {
   const [foods, setFoods] = useState<FoodItem[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -42,9 +37,7 @@ export default function AdminDashboard() {
   const [toDate, setToDate] = useState('');
 
   useEffect(() => {
-    fetch(`${API}/api/admin/categories`, {
-      headers: { Authorization: `Bearer ${getToken()}` },
-    })
+    adminFetch('/api/admin/categories')
       .then(r => r.json())
       .then(data => setCategories(Array.isArray(data) ? data : []))
       .catch(() => {});
@@ -56,9 +49,7 @@ export default function AdminDashboard() {
     if (fromDate) params.append('from', fromDate);
     if (toDate) params.append('to', toDate);
     const query = params.toString();
-    fetch(`${API}/api/admin/stats${query ? `?${query}` : ''}`, {
-      headers: { Authorization: `Bearer ${getToken()}` },
-    })
+    adminFetch(`/api/admin/stats${query ? `?${query}` : ''}`)
       .then(r => r.json())
       .then(data => setFoods(Array.isArray(data) ? data : []))
       .catch(() => setFoods([]))

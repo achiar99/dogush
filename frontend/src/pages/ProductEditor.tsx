@@ -40,11 +40,9 @@ interface Product {
 
 type DraftProduct = Omit<Product, 'id'> & { id?: string };
 
-const API = import.meta.env.VITE_API_BASE_URL || '';
+import { adminFetch, adminAuthHeaders } from '../api/adminFetch';
 
-function getToken() {
-  return localStorage.getItem('adminToken') || '';
-}
+const API = import.meta.env.VITE_API_BASE_URL || '';
 
 function emptyProduct(categories: Category[]): DraftProduct {
   return {
@@ -71,10 +69,9 @@ export default function ProductEditor() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const headers = { Authorization: `Bearer ${getToken()}` };
     Promise.all([
-      fetch(`${API}/api/admin/products`, { headers }).then(r => r.json()),
-      fetch(`${API}/api/admin/categories`, { headers }).then(r => r.json()),
+      adminFetch('/api/admin/products').then(r => r.json()),
+      adminFetch('/api/admin/categories').then(r => r.json()),
     ])
       .then(([prods, cats]) => {
         setProducts(Array.isArray(prods) ? prods : []);
@@ -114,9 +111,9 @@ export default function ProductEditor() {
     setUploadingImage(true);
     setError(null);
     try {
-      const urlRes = await fetch(`${API}/api/admin/upload-url`, {
+      const urlRes = await adminFetch('/api/admin/upload-url', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getToken()}` },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ filename: file.name, contentType: file.type }),
       });
       if (!urlRes.ok) throw new Error('Failed to get upload URL');
@@ -139,10 +136,7 @@ export default function ProductEditor() {
     e.stopPropagation();
     if (!confirm('למחוק מוצר זה?')) return;
     try {
-      await fetch(`${API}/api/admin/products/${id}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${getToken()}` },
-      });
+      await adminFetch(`/api/admin/products/${id}`, { method: 'DELETE' });
       setProducts(prev => prev.filter(p => p.id !== id));
     } catch {
       alert('שגיאה במחיקה');
@@ -157,11 +151,10 @@ export default function ProductEditor() {
     setSaving(true);
     setError(null);
     try {
-      const url  = isNew ? `${API}/api/admin/products` : `${API}/api/admin/products/${draft.id}`;
-      const method = isNew ? 'POST' : 'PUT';
-      const res = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getToken()}` },
+      const path = isNew ? '/api/admin/products' : `/api/admin/products/${draft.id}`;
+      const res = await adminFetch(path, {
+        method: isNew ? 'POST' : 'PUT',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(draft),
       });
       if (!res.ok) {

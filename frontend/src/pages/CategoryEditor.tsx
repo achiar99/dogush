@@ -1,15 +1,10 @@
 import { useEffect, useState } from 'react';
 import AdminLayout from '../components/AdminLayout';
+import { adminFetch } from '../api/adminFetch';
 
 interface Category {
   key: string;
   name: string;
-}
-
-const API = import.meta.env.VITE_API_BASE_URL || '';
-
-function getToken() {
-  return localStorage.getItem('adminToken') || '';
 }
 
 const inputStyle: React.CSSProperties = {
@@ -32,10 +27,9 @@ export default function CategoryEditor() {
   const [savedKey, setSavedKey] = useState<string | null>(null);
 
   useEffect(() => {
-    const headers = { Authorization: `Bearer ${getToken()}` };
     Promise.all([
-      fetch(`${API}/api/admin/categories`, { headers }).then(r => r.json()),
-      fetch(`${API}/api/admin/products`, { headers }).then(r => r.json()),
+      adminFetch('/api/admin/categories').then(r => r.json()),
+      adminFetch('/api/admin/products').then(r => r.json()),
     ])
       .then(([cats, prods]) => {
         setCategories(Array.isArray(cats) ? cats : []);
@@ -66,9 +60,9 @@ export default function CategoryEditor() {
     setSaving(true);
     setError(null);
     try {
-      const res = await fetch(`${API}/api/admin/categories`, {
+      const res = await adminFetch('/api/admin/categories', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getToken()}` },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: name.trim() }),
       });
       if (!res.ok) {
@@ -91,10 +85,7 @@ export default function CategoryEditor() {
     if (!confirm(`למחוק את הקטגוריה "${cat.name}"?`)) return;
     setError(null);
     try {
-      const res = await fetch(`${API}/api/admin/categories/${encodeURIComponent(cat.key)}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${getToken()}` },
-      });
+      const res = await adminFetch(`/api/admin/categories/${encodeURIComponent(cat.key)}`, { method: 'DELETE' });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
         setError(body.error ?? 'שגיאה במחיקה');

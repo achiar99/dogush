@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import AdminLayout from '../components/AdminLayout';
 import heConfig from '../../../shared/he.json';
+import { adminFetch } from '../api/adminFetch';
 
 const { strings, currencySymbol } = heConfig as any;
 
@@ -20,12 +21,6 @@ interface Order {
   createdAt: string;
 }
 
-const API = import.meta.env.VITE_API_BASE_URL || '';
-
-function getToken() {
-  return localStorage.getItem('adminToken') || '';
-}
-
 export default function AdminOrders() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [productMap, setProductMap] = useState<Record<string, string>>({});
@@ -36,7 +31,7 @@ export default function AdminOrders() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    fetch(`${API}/api/admin/products`, { headers: { Authorization: `Bearer ${getToken()}` } })
+    adminFetch('/api/admin/products')
       .then(r => r.json())
       .then(prods => {
         const map: Record<string, string> = {};
@@ -52,9 +47,7 @@ export default function AdminOrders() {
     if (fromDate) params.append('from', fromDate);
     if (toDate) params.append('to', toDate);
     const qs = params.toString();
-    fetch(`${API}/api/admin/orders${qs ? '?' + qs : ''}`, {
-      headers: { Authorization: `Bearer ${getToken()}` },
-    })
+    adminFetch(`/api/admin/orders${qs ? '?' + qs : ''}`)
       .then(r => r.json())
       .then(data => setOrders(Array.isArray(data) ? data : []))
       .catch(() => setOrders([]))
@@ -70,12 +63,9 @@ export default function AdminOrders() {
     if (!selectedOrder) return;
     setSaving(true);
     try {
-      const res = await fetch(`${API}/api/admin/orders/${selectedOrder.orderId}`, {
+      const res = await adminFetch(`/api/admin/orders/${selectedOrder.orderId}`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${getToken()}`,
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: selectedOrder.status }),
       });
       if (res.ok) {
