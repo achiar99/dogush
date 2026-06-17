@@ -1,6 +1,5 @@
 import { useState, ReactNode } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import Header from './Header';
 import heConfig from '../../../shared/he.json';
 
 const { strings } = heConfig as {
@@ -13,11 +12,14 @@ const { strings } = heConfig as {
   };
 };
 
-interface AdminLayoutProps {
-  children: ReactNode;
-}
+const navItems = (strings: any) => [
+  { to: '/admin/dashboard', label: strings.adminNavDashboard, icon: '📊' },
+  { to: '/admin/products',  label: strings.adminNavProducts,  icon: '📦' },
+  { to: '/admin/categories',label: strings.adminNavCategories,icon: '🏷️' },
+  { to: '/admin/orders',    label: strings.adminNavOrders,    icon: '🛒' },
+];
 
-export default function AdminLayout({ children }: AdminLayoutProps) {
+export default function AdminLayout({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -27,185 +29,93 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   };
 
   return (
-    <div className="page">
-      <Header showCart={false} />
-      <div style={{ padding: 20 }}>
-        <style>{`
-          @media (max-width: 767px) {
-            .admin-nav-container {
-              flex-direction: column;
-              gap: 12px;
-            }
-            .admin-nav-header {
-              width: 100%;
-              justify-content: space-between;
-              display: flex !important;
-            }
-            .admin-hamburger {
-              display: flex !important;
-            }
-            .admin-nav-links {
-              display: none !important;
-              flex-direction: column;
-              width: 100%;
-              padding-top: 12px;
-              border-top: 1px solid #ddd;
-            }
-            .admin-nav-links.open {
-              display: flex !important;
-            }
-            .admin-nav-links a, .admin-nav-links .logout-mobile {
-              width: 100%;
-              text-align: center;
-            }
-            .admin-logout-desktop {
-              display: none !important;
-            }
-          }
-          @media (min-width: 768px) {
-            .admin-hamburger {
-              display: none !important;
-            }
-            .admin-nav-links {
-              display: flex !important;
-            }
-            .logout-mobile {
-              display: none !important;
-            }
-          }
-        `}</style>
-        <div style={{ 
-          backgroundColor: '#f5f5f5', 
-          borderRadius: 8, 
-          padding: 16, 
-          marginBottom: 20,
-          display: 'flex', 
-          justifyContent: 'space-between', 
-          alignItems: 'center',
-          boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-          flexWrap: 'wrap',
-          gap: 12,
-        }} className="admin-nav-container">
-          <div className="admin-nav-header" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <button 
-              className="admin-hamburger"
-              onClick={() => setMenuOpen(!menuOpen)}
-              style={{
-                flexDirection: 'column',
-                justifyContent: 'center',
-                alignItems: 'center',
-                gap: 5,
-                width: 44,
-                height: 44,
-                backgroundColor: '#fff',
-                border: '2px solid #ddd',
-                borderRadius: 6,
-                cursor: 'pointer',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-              }}
-            >
-              <span style={{ display: 'block', width: 20, height: 2, backgroundColor: '#333', borderRadius: 2 }}></span>
-              <span style={{ display: 'block', width: 20, height: 2, backgroundColor: '#333', borderRadius: 2 }}></span>
-              <span style={{ display: 'block', width: 20, height: 2, backgroundColor: '#333', borderRadius: 2 }}></span>
-            </button>
-            <nav style={{ display: 'flex', gap: 12 }} className={`admin-nav-links ${menuOpen ? 'open' : ''}`}>
-              <NavLink
-                to="/admin/dashboard"
-                onClick={() => setMenuOpen(false)}
-                style={({ isActive }) => ({
-                  padding: '10px 20px',
-                  textDecoration: 'none',
-                  borderRadius: 6,
-                  backgroundColor: isActive ? '#c15f2a' : '#fff',
-                  color: isActive ? '#fff' : '#333',
-                  fontWeight: isActive ? 'bold' : 'normal',
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-                  transition: 'all 0.2s',
-                })}
-              >
-                {strings.adminNavDashboard}
-              </NavLink>
-              <NavLink
-                to="/admin/products"
-                onClick={() => setMenuOpen(false)}
-                style={({ isActive }) => ({
-                  padding: '10px 20px',
-                  textDecoration: 'none',
-                  borderRadius: 6,
-                  backgroundColor: isActive ? '#c15f2a' : '#fff',
-                  color: isActive ? '#fff' : '#333',
-                  fontWeight: isActive ? 'bold' : 'normal',
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-                  transition: 'all 0.2s',
-                })}
-              >
-                {strings.adminNavProducts}
-              </NavLink>
-              <NavLink
-                to="/admin/categories"
-                onClick={() => setMenuOpen(false)}
-                style={({ isActive }) => ({
-                  padding: '10px 20px',
-                  textDecoration: 'none',
-                  borderRadius: 6,
-                  backgroundColor: isActive ? '#c15f2a' : '#fff',
-                  color: isActive ? '#fff' : '#333',
-                  fontWeight: isActive ? 'bold' : 'normal',
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-                  transition: 'all 0.2s',
-                })}
-              >
-                {strings.adminNavCategories}
-              </NavLink>
-              <NavLink
-                to="/admin/orders"
-                onClick={() => setMenuOpen(false)}
-                style={({ isActive }) => ({
-                  padding: '10px 20px',
-                  textDecoration: 'none',
-                  borderRadius: 6,
-                  backgroundColor: isActive ? '#c15f2a' : '#fff',
-                  color: isActive ? '#fff' : '#333',
-                  fontWeight: isActive ? 'bold' : 'normal',
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-                  transition: 'all 0.2s',
-                })}
-              >
-                {strings.adminNavOrders}
-              </NavLink>
-              <button 
-                onClick={() => { handleLogout(); setMenuOpen(false); }}
-                className="logout-mobile"
-                style={{
-                  padding: '10px 20px',
-                  backgroundColor: '#333',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: 6,
-                  cursor: 'pointer',
-                }}
-              >
-                {strings.adminLogoutButton}
-              </button>
-            </nav>
-          </div>
-          <button 
-            onClick={handleLogout}
-            className="admin-logout-desktop"
-            style={{
-              padding: '10px 20px',
-              backgroundColor: '#333',
-              color: '#fff',
-              border: 'none',
-              borderRadius: 6,
-              cursor: 'pointer',
-            }}
-          >
-            {strings.adminLogoutButton}
-          </button>
+    <div style={{ minHeight: '100vh', backgroundColor: '#f4f6f9', fontFamily: 'inherit' }}>
+      {/* Top bar */}
+      <header style={{
+        backgroundColor: '#1e1e2e',
+        color: '#fff',
+        padding: '0 24px',
+        height: 58,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        boxShadow: '0 2px 12px rgba(0,0,0,0.25)',
+        position: 'sticky',
+        top: 0,
+        zIndex: 100,
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          {/* Hamburger (mobile) */}
+          <button
+            onClick={() => setMenuOpen(o => !o)}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#fff', fontSize: 22, lineHeight: 1, display: 'none' }}
+            className="admin-hamburger"
+          >☰</button>
+          <span style={{ fontWeight: 800, fontSize: '1.1rem', letterSpacing: 0.5, color: '#fff' }}>
+            🐾 Dogush Admin
+          </span>
         </div>
+
+        {/* Desktop nav */}
+        <nav style={{ display: 'flex', alignItems: 'center', gap: 4 }} className="admin-nav-desktop">
+          {navItems(strings).map(item => (
+            <NavLink key={item.to} to={item.to} style={({ isActive }) => ({
+              padding: '7px 16px',
+              borderRadius: 8,
+              textDecoration: 'none',
+              fontWeight: 600,
+              fontSize: '0.9rem',
+              color: isActive ? '#fff' : 'rgba(255,255,255,0.65)',
+              backgroundColor: isActive ? 'rgba(255,255,255,0.15)' : 'transparent',
+              transition: 'all 0.15s',
+              display: 'flex', alignItems: 'center', gap: 6,
+            })}>
+              <span>{item.icon}</span>{item.label}
+            </NavLink>
+          ))}
+        </nav>
+
+        <button onClick={handleLogout} style={{
+          padding: '7px 16px', backgroundColor: 'rgba(255,255,255,0.1)',
+          color: '#fff', border: '1px solid rgba(255,255,255,0.2)',
+          borderRadius: 8, cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem',
+          transition: 'background 0.15s',
+        }}>
+          {strings.adminLogoutButton}
+        </button>
+      </header>
+
+      {/* Mobile nav dropdown */}
+      {menuOpen && (
+        <div style={{
+          backgroundColor: '#2a2a3e', padding: '8px 16px 16px',
+          display: 'flex', flexDirection: 'column', gap: 4,
+        }}>
+          {navItems(strings).map(item => (
+            <NavLink key={item.to} to={item.to} onClick={() => setMenuOpen(false)} style={({ isActive }) => ({
+              padding: '10px 14px', borderRadius: 8, textDecoration: 'none',
+              fontWeight: 600, fontSize: '0.95rem',
+              color: isActive ? '#fff' : 'rgba(255,255,255,0.7)',
+              backgroundColor: isActive ? 'rgba(255,255,255,0.15)' : 'transparent',
+              display: 'flex', alignItems: 'center', gap: 10,
+            })}>
+              <span>{item.icon}</span>{item.label}
+            </NavLink>
+          ))}
+        </div>
+      )}
+
+      {/* Page content */}
+      <main style={{ padding: '28px 28px', maxWidth: 1200, margin: '0 auto' }}>
         {children}
-      </div>
+      </main>
+
+      <style>{`
+        @media (max-width: 767px) {
+          .admin-nav-desktop { display: none !important; }
+          .admin-hamburger { display: block !important; }
+        }
+      `}</style>
     </div>
   );
 }
