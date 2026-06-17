@@ -270,6 +270,23 @@ export async function createCategory(data: Category): Promise<Category> {
   return data;
 }
 
+export async function updateCategory(key: string, updates: Partial<Pick<Category, 'name' | 'priority'>>): Promise<Category> {
+  const sets: string[] = [];
+  const names: Record<string, string> = {};
+  const values: Record<string, unknown> = {};
+  if (updates.name !== undefined) { sets.push('#name = :name'); names['#name'] = 'name'; values[':name'] = updates.name; }
+  if (updates.priority !== undefined) { sets.push('#priority = :priority'); names['#priority'] = 'priority'; values[':priority'] = updates.priority; }
+  const result = await docClient.send(new UpdateCommand({
+    TableName: CATEGORIES_TABLE,
+    Key: { key },
+    UpdateExpression: `SET ${sets.join(', ')}`,
+    ExpressionAttributeNames: names,
+    ExpressionAttributeValues: values,
+    ReturnValues: 'ALL_NEW',
+  }));
+  return result.Attributes as Category;
+}
+
 export async function deleteCategory(key: string): Promise<void> {
   await docClient.send(new DeleteCommand({ TableName: CATEGORIES_TABLE, Key: { key } }));
 }

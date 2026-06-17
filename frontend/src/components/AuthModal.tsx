@@ -6,7 +6,7 @@ const API = import.meta.env.VITE_API_BASE_URL || '';
 export default function AuthModal({ onClose }: { onClose: () => void }) {
   const { login } = useUser();
   const [mode, setMode] = useState<'login' | 'register'>('login');
-  const [form, setForm] = useState({ email: '', password: '', name: '' });
+  const [form, setForm] = useState({ email: '', password: '', name: '', phone: '', address: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -16,11 +16,12 @@ export default function AuthModal({ onClose }: { onClose: () => void }) {
     setError(null);
     if (!form.email || !form.password) { setError('יש למלא אימייל וסיסמה'); return; }
     if (mode === 'register' && !form.name) { setError('יש למלא שם'); return; }
+    if (mode === 'register' && !form.phone) { setError('יש למלא מספר טלפון'); return; }
     setLoading(true);
     try {
       const body = mode === 'login'
         ? { email: form.email, password: form.password }
-        : { email: form.email, password: form.password, name: form.name };
+        : { email: form.email, password: form.password, name: form.name, phone: form.phone, address: form.address };
       const res = await fetch(`${API}/api/auth/${mode}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -50,11 +51,23 @@ export default function AuthModal({ onClose }: { onClose: () => void }) {
         </h2>
 
         {mode === 'register' && (
-          <div style={{ marginBottom: 14 }}>
-            <label style={labelStyle}>שם מלא</label>
-            <input value={form.name} onChange={e => set('name', e.target.value)}
-              placeholder="ישראל ישראלי" style={inputStyle} />
-          </div>
+          <>
+            <div style={{ marginBottom: 14 }}>
+              <label style={labelStyle}>שם מלא</label>
+              <input value={form.name} onChange={e => set('name', e.target.value)}
+                placeholder="ישראל ישראלי" style={inputStyle} />
+            </div>
+            <div style={{ marginBottom: 14 }}>
+              <label style={labelStyle}>טלפון</label>
+              <input type="tel" value={form.phone} onChange={e => set('phone', e.target.value)}
+                placeholder="050-0000000" style={inputStyle} dir="ltr" />
+            </div>
+            <div style={{ marginBottom: 14 }}>
+              <label style={labelStyle}>כתובת בית</label>
+              <input value={form.address} onChange={e => set('address', e.target.value)}
+                placeholder="רחוב הרצל 1, תל אביב" style={inputStyle} />
+            </div>
+          </>
         )}
 
         <div style={{ marginBottom: 14 }}>

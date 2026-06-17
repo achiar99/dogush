@@ -10,7 +10,12 @@ output "frontend_bucket" {
 
 output "frontend_url" {
   description = "CloudFront HTTPS URL for the frontend"
-  value       = "https://${aws_cloudfront_distribution.frontend.domain_name}"
+  value       = "https://${local.domain}"
+}
+
+output "nameservers" {
+  description = "Route 53 nameservers — point your registrar here (prod only)"
+  value       = var.environment == "prod" ? aws_route53_zone.main[0].name_servers : []
 }
 
 output "images_bucket" {

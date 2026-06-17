@@ -1,9 +1,9 @@
 {
   "strings": {
-    "logo": "החנות של יהודה",
+    "logo": "Dogush",
     "searchPlaceholder": "חפש בתפריט",
-    "title": "החנות של יהודה",
-    "subtitle": "הכל לחיית המחמד שלך",
+    "title": "Dogush",
+    "subtitle": "החנות שלך בגוש",
     "loading": "טוען...",
     "errorLoadingMenu": "לא הצלחתי לטעון את התפריט. מציגים נתוני דוגמה.",
     "orderNowButton": "הזמינו עכשיו",
@@ -71,7 +71,7 @@
     "statusInProgress": "בטיפול"
   },
   "currencySymbol": "₪",
-  "logoImageFile": "logo.png",
+  "logoImageFile": "logo.jpg",
   "categories": [
     { "key": "dryFood", "name": "אוכל יבש", "priority": 1 },
     { "key": "wetFood", "name": "אוכל רטוב", "priority": 2 },

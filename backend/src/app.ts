@@ -17,6 +17,7 @@ import {
   getTableReservations,
   listCategories,
   createCategory,
+  updateCategory,
   deleteCategory,
   getUserByEmail,
   getUserById,
@@ -155,7 +156,7 @@ app.post('/api/orders', async (req, res) => {
 // ─── User auth ────────────────────────────────────────────────────────────────
 app.post('/api/auth/register', async (req, res) => {
   try {
-    const { email, password, name } = req.body;
+    const { email, password, name, phone, address } = req.body;
     if (!email || !password || !name) {
       res.status(400).json({ error: 'email, password and name are required' });
       return;
@@ -163,7 +164,7 @@ app.post('/api/auth/register', async (req, res) => {
     const existing = await getUserByEmail(email.toLowerCase());
     if (existing) { res.status(409).json({ error: 'כתובת האימייל כבר בשימוש' }); return; }
     const passwordHash = await bcrypt.hash(password, 10);
-    const user = await createUser({ email: email.toLowerCase(), passwordHash, name });
+    const user = await createUser({ email: email.toLowerCase(), passwordHash, name, phone, address });
     const token = jwt.sign({ userId: user.userId }, JWT_SECRET, { expiresIn: '30d' });
     res.status(201).json({ token, user: { userId: user.userId, email: user.email, name: user.name, phone: user.phone, address: user.address } });
   } catch (error) {
@@ -297,6 +298,21 @@ app.post('/api/admin/categories', requireAdmin, async (req, res) => {
   } catch (error) {
     console.error('Create category error:', error);
     res.status(500).json({ error: 'Failed to create category' });
+  }
+});
+
+app.put('/api/admin/categories/:key', requireAdmin, async (req, res) => {
+  try {
+    const key = String(req.params.key);
+    const { name, priority } = req.body;
+    const updated = await updateCategory(key, {
+      ...(name !== undefined ? { name } : {}),
+      ...(priority !== undefined ? { priority: Number(priority) } : {}),
+    });
+    res.json(updated);
+  } catch (error) {
+    console.error('Update category error:', error);
+    res.status(500).json({ error: 'Failed to update category' });
   }
 });
 
