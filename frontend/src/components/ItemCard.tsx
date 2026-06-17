@@ -53,12 +53,12 @@ export default function ItemCard({ item, onOrderNow }: Props) {
               אזל מהמלאי
             </span>
           ) : (
-            <div style={{ display: 'flex', gap: 8, flexDirection: 'column' }}>
-              <button className="item-card__button" type="button" onClick={handleOrderNow}>
+            <div className="item-card__actions">
+              <button className="item-card__button item-card__button--secondary" type="button" onClick={handleOrderNow}>
                 {strings.orderNowButton}
               </button>
               <button
-                className={`item-card__button item-card__button--secondary${addedFlash ? ' item-card__button--added' : ''}`}
+                className={`item-card__button${addedFlash ? ' item-card__button--added' : ''}`}
                 type="button"
                 onClick={handleAddToCart}
               >

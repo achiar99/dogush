@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import ItemCard from '../components/ItemCard';
 import Header from '../components/Header';
 import WhatsAppButton from '../components/WhatsAppButton';
@@ -19,6 +19,8 @@ export default function Menu() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
 
   useEffect(() => {
     Promise.all([
@@ -56,14 +58,51 @@ export default function Menu() {
     return [...fromApi, ...orphans];
   }, [categories, byCategory]);
 
+  useEffect(() => {
+    if (visibleCategories.length === 0) return;
+    const observers: IntersectionObserver[] = [];
+    visibleCategories.forEach(cat => {
+      const el = sectionRefs.current[cat.key];
+      if (!el) return;
+      const obs = new IntersectionObserver(
+        ([entry]) => { if (entry.isIntersecting) setActiveCategory(cat.key); },
+        { rootMargin: '-20% 0px -70% 0px' }
+      );
+      obs.observe(el);
+      observers.push(obs);
+    });
+    return () => observers.forEach(o => o.disconnect());
+  }, [visibleCategories]);
+
+  const scrollToCategory = (key: string) => {
+    sectionRefs.current[key]?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
   if (loading) return <div className="page"><Header /><p style={{ textAlign: 'center', marginTop: 40 }}>{heConfig.strings.loading}</p></div>;
   if (error)   return <div className="page"><Header /><p style={{ textAlign: 'center', marginTop: 40 }}>{heConfig.strings.errorLoadingMenu}</p></div>;
 
   return (
     <div className="page">
       <Header cartOpen={cartOpen} onCartOpenChange={setCartOpen} />
+      {visibleCategories.length > 1 && (
+        <nav className="categoryNav">
+          {visibleCategories.map(cat => (
+            <button
+              key={cat.key}
+              className={`categoryNav__pill${activeCategory === cat.key ? ' categoryNav__pill--active' : ''}`}
+              onClick={() => scrollToCategory(cat.key)}
+            >
+              {cat.name}
+            </button>
+          ))}
+        </nav>
+      )}
       {visibleCategories.map(cat => (
-        <section key={cat.key} className="menuSection">
+        <section
+          key={cat.key}
+          className="menuSection"
+          ref={el => { sectionRefs.current[cat.key] = el; }}
+        >
           <h2 className="menuSection__title">{cat.name}</h2>
           <div className="menuGrid">
             {(byCategory[cat.key] ?? []).map(item => (
