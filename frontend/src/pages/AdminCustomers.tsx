@@ -63,17 +63,17 @@ export default function AdminCustomers() {
   return (
     <AdminLayout>
       <div style={{ direction: 'rtl' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: 12, marginBottom: 24 }}>
           <h1 style={{ margin: 0, fontSize: 24, fontWeight: 900 }}>👥 לקוחות</h1>
-          <div style={{ position: 'relative' }}>
+          <div style={{ position: 'relative', flex: '1 1 220px', maxWidth: 320 }}>
             <input
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="🔍 חיפוש לפי שם, אימייל, טלפון..."
               style={{
                 padding: '9px 16px', borderRadius: 10, border: '1.5px solid #e0d8cc',
-                fontSize: '0.9rem', width: 280, fontFamily: 'inherit', outline: 'none',
-                background: '#fff',
+                fontSize: '0.9rem', width: '100%', fontFamily: 'inherit', outline: 'none',
+                background: '#fff', boxSizing: 'border-box',
               }}
             />
             {search && (
@@ -85,7 +85,7 @@ export default function AdminCustomers() {
           </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: selected ? '1fr 1fr' : '1fr', gap: 20 }}>
+        <div className={selected ? 'cust-grid cust-grid--split' : 'cust-grid'}>
           {/* Customer list */}
           <div style={{ background: '#fff', borderRadius: 16, boxShadow: '0 2px 8px rgba(0,0,0,0.06)', overflow: 'hidden' }}>
             <div style={{ padding: '12px 20px', borderBottom: '1px solid #f0f0f0', fontSize: 13, color: '#888', fontWeight: 600 }}>
@@ -129,7 +129,7 @@ export default function AdminCustomers() {
 
           {/* Customer detail panel */}
           {selected && (
-            <div>
+            <div className="cust-detail">
               {/* Info card */}
               <div style={{ background: '#fff', borderRadius: 16, padding: 24, boxShadow: '0 2px 8px rgba(0,0,0,0.06)', marginBottom: 16 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
@@ -191,6 +191,18 @@ export default function AdminCustomers() {
             </div>
           )}
         </div>
+        <style>{`
+          .cust-grid { display: grid; grid-template-columns: 1fr; gap: 20px; }
+          .cust-grid--split { grid-template-columns: 1fr 1fr; }
+          @media (max-width: 700px) {
+            .cust-grid--split { grid-template-columns: 1fr; }
+            .cust-detail {
+              position: fixed; inset: 0; z-index: 200;
+              overflow-y: auto; padding: 16px;
+              background: #f4f6f9;
+            }
+          }
+        `}</style>
       </div>
     </AdminLayout>
   );

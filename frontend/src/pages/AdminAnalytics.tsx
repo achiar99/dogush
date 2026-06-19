@@ -84,13 +84,13 @@ export default function AdminAnalytics() {
   return (
     <AdminLayout>
       <div style={{ direction: 'rtl' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: 12, marginBottom: 24 }}>
           <h1 style={{ margin: 0, fontSize: 24, fontWeight: 900 }}>📈 אנליטיקס</h1>
-          <div style={{ display: 'flex', gap: 8 }}>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
             {RANGES.map(r => (
               <button key={r.days} onClick={() => setRange(r.days)} style={{
-                padding: '7px 16px', borderRadius: 8, cursor: 'pointer', fontWeight: 600,
-                fontSize: '0.85rem', fontFamily: 'inherit',
+                padding: '7px 14px', borderRadius: 8, cursor: 'pointer', fontWeight: 600,
+                fontSize: '0.82rem', fontFamily: 'inherit',
                 background: range === r.days ? '#1e1e2e' : '#fff',
                 color: range === r.days ? '#fff' : '#555',
                 border: `1.5px solid ${range === r.days ? '#1e1e2e' : '#ddd'}`,
@@ -102,7 +102,7 @@ export default function AdminAnalytics() {
         {loading ? <p>טוען...</p> : (
           <>
             {/* KPI cards */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 28 }}>
+            <div className="admin-kpi-grid" style={{ marginBottom: 28 }}>
               {[
                 { label: 'כניסות', value: filtered.length, icon: '👁️' },
                 { label: 'מבקרים ייחודיים', value: uniqueSessions, icon: '👤' },
@@ -144,14 +144,12 @@ export default function AdminAnalytics() {
               </div>
             )}
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 24 }}>
-              {/* Sources */}
+            <div className="admin-2col-grid" style={{ marginBottom: 24 }}>
               <StatCard title="מקורות כניסה" items={topN(bySource)} total={filtered.length} color="#c15f2a" />
-              {/* Countries */}
               <StatCard title="מדינות" items={topN(byCountry)} total={filtered.length} color="#2563eb" />
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 24 }}>
+            <div className="admin-2col-grid" style={{ marginBottom: 24 }}>
               {/* Cities */}
               <StatCard title="ערים" items={topN(byCity)} total={filtered.length} color="#16a34a" />
               {/* QR stats */}
@@ -207,6 +205,23 @@ export default function AdminAnalytics() {
             </div>
           </>
         )}
+
+        <style>{`
+          .admin-kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+          }
+          .admin-2col-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+          }
+          @media (max-width: 600px) {
+            .admin-kpi-grid { grid-template-columns: repeat(2, 1fr); }
+            .admin-2col-grid { grid-template-columns: 1fr; }
+          }
+        `}</style>
       </div>
     </AdminLayout>
   );

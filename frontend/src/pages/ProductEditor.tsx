@@ -192,59 +192,96 @@ export default function ProductEditor() {
       {loading ? (
         <p style={{ direction: 'rtl' }}>{strings.loading}</p>
       ) : (
-        <table style={{ width: '100%', borderCollapse: 'collapse', direction: 'rtl' }}>
-          <thead>
-            <tr style={{ backgroundColor: '#f9f9f9', borderBottom: '2px solid #eee' }}>
-              <th style={{ textAlign: 'right', padding: 12 }}>{strings.tableHeaderName}</th>
-              <th style={{ textAlign: 'right', padding: 12 }}>{strings.tableHeaderCategory}</th>
-              <th style={{ textAlign: 'right', padding: 12 }}>{strings.tableHeaderPrice}</th>
-              <th style={{ textAlign: 'center', padding: 12 }}>מלאי</th>
-              <th style={{ textAlign: 'center', padding: 12 }}>{strings.tableHeaderActive}</th>
-              <th style={{ padding: 12 }}></th>
-            </tr>
-          </thead>
-          <tbody>
+        <>
+          {/* Desktop table */}
+          <div className="prod-table-wrap">
+            <table style={{ width: '100%', borderCollapse: 'collapse', direction: 'rtl' }}>
+              <thead>
+                <tr style={{ backgroundColor: '#f9f9f9', borderBottom: '2px solid #eee' }}>
+                  <th style={{ textAlign: 'right', padding: '12px 10px' }}>{strings.tableHeaderName}</th>
+                  <th style={{ textAlign: 'right', padding: '12px 10px' }}>{strings.tableHeaderCategory}</th>
+                  <th style={{ textAlign: 'right', padding: '12px 10px' }}>{strings.tableHeaderPrice}</th>
+                  <th style={{ textAlign: 'center', padding: '12px 10px' }}>מלאי</th>
+                  <th style={{ textAlign: 'center', padding: '12px 10px' }}>{strings.tableHeaderActive}</th>
+                  <th style={{ padding: '12px 10px' }}></th>
+                </tr>
+              </thead>
+              <tbody>
+                {products.map(product => (
+                  <tr key={product.id} onClick={() => openEdit(product)}
+                    style={{ borderBottom: '1px solid #eee', backgroundColor: product.active ? '#d4edda' : '#f8d7da', cursor: 'pointer' }}>
+                    <td style={{ padding: '10px 10px' }}>
+                      {product.name}
+                      {savedId === product.id && <span style={{ marginRight: 8, color: '#28a745', fontSize: '0.85rem' }}>{strings.savedMessage}</span>}
+                    </td>
+                    <td style={{ padding: '10px 10px' }}>{getCategoryName(product.category)}</td>
+                    <td style={{ padding: '10px 10px' }}>{product.price} ₪</td>
+                    <td style={{ textAlign: 'center', padding: '10px 10px' }}>
+                      {product.stock == null ? <span style={{ color: '#aaa' }}>—</span>
+                        : product.stock === 0 ? <span style={{ color: '#dc3545', fontWeight: 700 }}>אזל</span>
+                        : <span style={{ fontWeight: 600 }}>{product.stock}</span>}
+                    </td>
+                    <td style={{ textAlign: 'center', padding: '10px 10px' }}>{product.active ? '✓' : '✗'}</td>
+                    <td style={{ padding: '10px 10px', textAlign: 'center' }}>
+                      <button onClick={e => handleDelete(product.id, e)}
+                        style={{ padding: '4px 12px', backgroundColor: '#dc3545', color: '#fff', border: 'none', borderRadius: 4, cursor: 'pointer', fontSize: '0.82rem' }}>
+                        מחק
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile cards */}
+          <div className="prod-cards-wrap">
             {products.map(product => (
-              <tr key={product.id} onClick={() => openEdit(product)}
-                style={{
-                  borderBottom: '1px solid #eee',
-                  backgroundColor: product.active ? '#d4edda' : '#f8d7da',
-                  cursor: 'pointer',
-                }}>
-                <td style={{ padding: 12 }}>
-                  {product.name}
-                  {savedId === product.id && (
-                    <span style={{ marginRight: 8, color: '#28a745', fontSize: '0.85rem' }}>{strings.savedMessage}</span>
-                  )}
-                </td>
-                <td style={{ padding: 12 }}>{getCategoryName(product.category)}</td>
-                <td style={{ padding: 12 }}>{product.price} ₪</td>
-                <td style={{ textAlign: 'center', padding: 12 }}>
-                  {product.stock === undefined || product.stock === null
-                    ? <span style={{ color: '#aaa' }}>—</span>
-                    : product.stock === 0
-                      ? <span style={{ color: '#dc3545', fontWeight: 700 }}>אזל</span>
-                      : <span style={{ fontWeight: 600 }}>{product.stock}</span>
-                  }
-                </td>
-                <td style={{ textAlign: 'center', padding: 12 }}>{product.active ? '✓' : '✗'}</td>
-                <td style={{ padding: 12, textAlign: 'center' }}>
-                  <button
-                    onClick={e => handleDelete(product.id, e)}
-                    style={{ padding: '4px 14px', backgroundColor: '#dc3545', color: '#fff', border: 'none', borderRadius: 4, cursor: 'pointer', fontSize: '0.85rem' }}
-                  >
-                    מחק
-                  </button>
-                </td>
-              </tr>
+              <div key={product.id} onClick={() => openEdit(product)} style={{
+                background: product.active ? '#f0faf2' : '#fff5f5',
+                borderRadius: 14, padding: '12px 14px', marginBottom: 10,
+                boxShadow: '0 2px 6px rgba(0,0,0,0.06)', cursor: 'pointer', direction: 'rtl',
+                borderRight: `4px solid ${product.active ? '#22c55e' : '#ef4444'}`,
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 700, fontSize: 15 }}>
+                      {product.name}
+                      {savedId === product.id && <span style={{ marginRight: 8, color: '#28a745', fontSize: 12 }}>{strings.savedMessage}</span>}
+                    </div>
+                    <div style={{ fontSize: 12, color: '#777', marginTop: 3 }}>
+                      {getCategoryName(product.category)}
+                      {product.stock != null && <span style={{ marginRight: 8, color: product.stock === 0 ? '#dc3545' : '#555' }}>
+                        · מלאי: {product.stock === 0 ? 'אזל' : product.stock}
+                      </span>}
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0, marginRight: 8 }}>
+                    <span style={{ fontWeight: 800, fontSize: 16 }}>{product.price} ₪</span>
+                    <button onClick={e => handleDelete(product.id, e)}
+                      style={{ padding: '4px 10px', backgroundColor: '#dc3545', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 12 }}>
+                      מחק
+                    </button>
+                  </div>
+                </div>
+              </div>
             ))}
-          </tbody>
-        </table>
+          </div>
+
+          <style>{`
+            .prod-table-wrap { background: #fff; border-radius: 16px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+            .prod-cards-wrap { display: none; }
+            @media (max-width: 640px) {
+              .prod-table-wrap { display: none; }
+              .prod-cards-wrap { display: block; }
+            }
+          `}</style>
+        </>
       )}
 
       {draft && (
-        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-          <div style={{ backgroundColor: '#fff', padding: 24, borderRadius: 8, width: 500, maxHeight: '90vh', overflowY: 'auto', direction: 'rtl' }}>
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 1000 }}>
+          <div style={{ backgroundColor: '#fff', padding: 24, borderRadius: '16px 16px 0 0', width: '100%', maxWidth: 520, maxHeight: '90vh', overflowY: 'auto', direction: 'rtl' }}>
             <h2 style={{ margin: '0 0 20px' }}>
               {isNew ? strings.addProductTitle : strings.editProductTitle}
             </h2>

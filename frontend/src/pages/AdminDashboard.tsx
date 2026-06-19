@@ -99,24 +99,24 @@ export default function AdminDashboard() {
     }).catch(() => {}).finally(() => setLoading(false));
   }, []);
 
-  // Last 14 days axis
-  const days14 = Array.from({ length: 14 }, (_, i) => {
+  // Last 7 days axis
+  const days7 = Array.from({ length: 7 }, (_, i) => {
     const d = new Date();
-    d.setDate(d.getDate() - (13 - i));
+    d.setDate(d.getDate() - (6 - i));
     return d.toISOString().slice(0, 10);
   });
 
-  const ordersByDay = days14.map(date => ({
+  const ordersByDay = days7.map(date => ({
     label: date.slice(5),
     value: orders.filter(o => o.createdAt?.slice(0, 10) === date).length,
   }));
 
-  const viewsByDay = days14.map(date => ({
+  const viewsByDay = days7.map(date => ({
     label: date.slice(5),
     value: views.filter(v => v.date === date).length,
   }));
 
-  const uniqueVisitorsByDay = days14.map(date => ({
+  const uniqueVisitorsByDay = days7.map(date => ({
     label: date.slice(5),
     value: new Set(views.filter(v => v.date === date).map(v => v.sessionId)).size,
   }));
@@ -154,32 +154,31 @@ export default function AdminDashboard() {
         {loading ? <p>טוען...</p> : (
           <>
             {/* KPIs */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 24 }}>
+            <div className="db-kpi-grid" style={{ marginBottom: 24 }}>
               {[
                 { label: 'הזמנות סה״כ', value: orders.length, icon: '🛒' },
                 { label: 'הזמנות היום', value: todayOrders, icon: '📦' },
                 { label: 'כניסות היום', value: todayViews, icon: '👁️' },
                 { label: `הכנסות ₪`, value: totalRevenue.toLocaleString(), icon: '💰' },
               ].map(k => (
-                <div key={k.label} style={{ background: '#fff', borderRadius: 16, padding: '20px 24px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
-                  <div style={{ fontSize: 26, marginBottom: 6 }}>{k.icon}</div>
-                  <div style={{ fontSize: 30, fontWeight: 900, color: '#1e1e2e' }}>{k.value}</div>
+                <div key={k.label} style={{ background: '#fff', borderRadius: 16, padding: '16px 20px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
+                  <div style={{ fontSize: 24, marginBottom: 4 }}>{k.icon}</div>
+                  <div style={{ fontSize: 28, fontWeight: 900, color: '#1e1e2e' }}>{k.value}</div>
                   <div style={{ fontSize: 12, color: '#888', marginTop: 4 }}>{k.label}</div>
                 </div>
               ))}
             </div>
 
-            {/* Daily orders chart */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 20 }}>
-              <Card title="📦 הזמנות יומיות (14 ימים)">
+            <div className="db-chart-grid" style={{ marginBottom: 20 }}>
+              <Card title="📦 הזמנות יומיות (7 ימים)">
                 <BarChart data={ordersByDay} color="#c15f2a" />
               </Card>
-              <Card title="👁️ כניסות יומיות (14 ימים)">
+              <Card title="👁️ כניסות יומיות (7 ימים)">
                 <BarChart data={viewsByDay} color="#3b82f6" />
               </Card>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 20 }}>
+            <div className="db-chart-grid" style={{ marginBottom: 20 }}>
               <Card title="👤 מבקרים ייחודיים יומי">
                 <BarChart data={uniqueVisitorsByDay} color="#8b5cf6" />
               </Card>
@@ -193,6 +192,27 @@ export default function AdminDashboard() {
             </Card>
           </>
         )}
+
+        <style>{`
+          .db-kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+          }
+          .db-chart-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+          }
+          @media (max-width: 600px) {
+            .db-kpi-grid {
+              grid-template-columns: repeat(2, 1fr);
+            }
+            .db-chart-grid {
+              grid-template-columns: 1fr;
+            }
+          }
+        `}</style>
       </div>
     </AdminLayout>
   );

@@ -126,7 +126,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
       )}
 
       {/* Page content */}
-      <main style={{ padding: '28px', maxWidth: 1200, margin: '0 auto' }}>
+      <main style={{ padding: '20px 16px', maxWidth: 1200, margin: '0 auto' }}>
         {children}
       </main>
 
@@ -134,6 +134,9 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
         @media (max-width: 767px) {
           .admin-subnav { display: none !important; }
           .admin-hamburger { display: block !important; }
+        }
+        @media (min-width: 768px) {
+          main { padding: 28px !important; }
         }
       `}</style>
     </div>

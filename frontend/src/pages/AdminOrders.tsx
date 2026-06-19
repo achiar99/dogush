@@ -97,56 +97,100 @@ export default function AdminOrders() {
     <AdminLayout>
       <h1 style={{ direction: 'rtl', marginBottom: 20 }}>{strings.adminOrdersTitle}</h1>
 
-      <div style={{ marginBottom: 24, display: 'flex', gap: 16, direction: 'rtl', alignItems: 'center' }}>
+      <div style={{ marginBottom: 24, display: 'flex', gap: 12, direction: 'rtl', alignItems: 'center', flexWrap: 'wrap' }}>
         <input type="date" value={fromDate} onChange={e => setFromDate(e.target.value)}
-          style={{ padding: '8px 12px', borderRadius: 4, border: '1px solid #ccc' }} />
+          style={{ padding: '8px 12px', borderRadius: 8, border: '1.5px solid #e0d8cc', fontFamily: 'inherit' }} />
         <span>עד</span>
         <input type="date" value={toDate} onChange={e => setToDate(e.target.value)}
-          style={{ padding: '8px 12px', borderRadius: 4, border: '1px solid #ccc' }} />
+          style={{ padding: '8px 12px', borderRadius: 8, border: '1.5px solid #e0d8cc', fontFamily: 'inherit' }} />
       </div>
 
       {loading ? (
         <p style={{ direction: 'rtl' }}>{strings.loading}</p>
       ) : (
-        <table style={{ width: '100%', borderCollapse: 'collapse', direction: 'rtl' }}>
-          <thead>
-            <tr style={{ backgroundColor: '#f9f9f9', borderBottom: '2px solid #eee' }}>
-              <th style={{ textAlign: 'right', padding: '16px 12px' }}>{strings.tableHeaderOrderId}</th>
-              <th style={{ textAlign: 'right', padding: '16px 12px' }}>{strings.tableHeaderCustomer}</th>
-              <th style={{ textAlign: 'right', padding: '16px 12px' }}>{strings.tableHeaderTotal}</th>
-              <th style={{ textAlign: 'center', padding: '16px 12px' }}>{strings.tableHeaderStatus}</th>
-              <th style={{ textAlign: 'center', padding: '16px 12px' }}>{strings.tableHeaderTime}</th>
-            </tr>
-          </thead>
-          <tbody>
+        <>
+          {/* Desktop table */}
+          <div className="orders-table-wrap">
+            <table style={{ width: '100%', borderCollapse: 'collapse', direction: 'rtl' }}>
+              <thead>
+                <tr style={{ backgroundColor: '#f9f9f9', borderBottom: '2px solid #eee' }}>
+                  <th style={{ textAlign: 'right', padding: '14px 12px' }}>{strings.tableHeaderOrderId}</th>
+                  <th style={{ textAlign: 'right', padding: '14px 12px' }}>{strings.tableHeaderCustomer}</th>
+                  <th style={{ textAlign: 'right', padding: '14px 12px' }}>{strings.tableHeaderTotal}</th>
+                  <th style={{ textAlign: 'center', padding: '14px 12px' }}>{strings.tableHeaderStatus}</th>
+                  <th style={{ textAlign: 'center', padding: '14px 12px' }}>{strings.tableHeaderTime}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {orders.map(order => (
+                  <tr key={order.orderId} onClick={() => setSelectedOrder({ ...order })}
+                    style={{ borderBottom: '1px solid #eee', cursor: 'pointer' }}>
+                    <td style={{ padding: 12, fontWeight: 'bold' }}>#{order.orderId.slice(-6)}</td>
+                    <td style={{ padding: 12 }}>
+                      <div style={{ fontWeight: 600 }}>{order.customer}</div>
+                      <div style={{ fontSize: '0.85rem', color: '#666' }}>{order.address}</div>
+                    </td>
+                    <td style={{ padding: 12 }}>{currencySymbol}{order.total}</td>
+                    <td style={{ textAlign: 'center', padding: 12 }}>
+                      <span style={{
+                        padding: '4px 10px', borderRadius: 12, fontSize: '0.85rem',
+                        backgroundColor: order.status === 'completed' ? '#e6f4ea' : '#fff4e5',
+                        color: order.status === 'completed' ? '#1e7e34' : '#b45d00',
+                      }}>
+                        {getStatusLabel(order.status)}
+                      </span>
+                    </td>
+                    <td style={{ textAlign: 'center', padding: 12, color: '#444', whiteSpace: 'nowrap' }}>{formatDateTime(order.createdAt)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile cards */}
+          <div className="orders-cards-wrap">
             {orders.map(order => (
-              <tr key={order.orderId} onClick={() => setSelectedOrder({ ...order })}
-                style={{ borderBottom: '1px solid #eee', cursor: 'pointer' }}>
-                <td style={{ padding: 12, fontWeight: 'bold' }}>#{order.orderId.slice(-6)}</td>
-                <td style={{ padding: 12 }}>
-                  <div style={{ fontWeight: 600 }}>{order.customer}</div>
-                  <div style={{ fontSize: '0.85rem', color: '#666' }}>{order.address}</div>
-                </td>
-                <td style={{ padding: 12 }}>{currencySymbol}{order.total}</td>
-                <td style={{ textAlign: 'center', padding: 12 }}>
+              <div key={order.orderId} onClick={() => setSelectedOrder({ ...order })}
+                style={{
+                  background: '#fff', borderRadius: 14, padding: '14px 16px', marginBottom: 10,
+                  boxShadow: '0 2px 6px rgba(0,0,0,0.06)', cursor: 'pointer', direction: 'rtl',
+                }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+                  <div>
+                    <div style={{ fontWeight: 800, fontSize: 15 }}>{order.customer}</div>
+                    <div style={{ fontSize: 12, color: '#888', marginTop: 2 }}>#{order.orderId.slice(-6)} · {formatDateTime(order.createdAt)}</div>
+                  </div>
+                  <div style={{ fontWeight: 900, fontSize: 17, color: '#1e1e2e' }}>{currencySymbol}{order.total}</div>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  {order.address && <div style={{ fontSize: 12, color: '#aaa' }}>📍 {order.address}</div>}
                   <span style={{
-                    padding: '4px 8px', borderRadius: 12, fontSize: '0.9rem',
+                    padding: '3px 10px', borderRadius: 12, fontSize: '0.8rem',
                     backgroundColor: order.status === 'completed' ? '#e6f4ea' : '#fff4e5',
                     color: order.status === 'completed' ? '#1e7e34' : '#b45d00',
                   }}>
                     {getStatusLabel(order.status)}
                   </span>
-                </td>
-                <td style={{ textAlign: 'center', padding: 12, color: '#444' }}>{formatDateTime(order.createdAt)}</td>
-              </tr>
+                </div>
+              </div>
             ))}
-          </tbody>
-        </table>
+            {orders.length === 0 && <p style={{ textAlign: 'center', color: '#aaa' }}>אין הזמנות</p>}
+          </div>
+
+          <style>{`
+            .orders-table-wrap { background: #fff; border-radius: 16px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+            .orders-cards-wrap { display: none; }
+            @media (max-width: 640px) {
+              .orders-table-wrap { display: none; }
+              .orders-cards-wrap { display: block; }
+            }
+          `}</style>
+        </>
       )}
 
       {selectedOrder && (
-        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-          <div style={{ backgroundColor: '#fff', padding: 24, borderRadius: 8, width: 500, maxHeight: '80vh', overflowY: 'auto' }}>
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 1000 }}>
+          <div style={{ backgroundColor: '#fff', padding: 24, borderRadius: '16px 16px 0 0', width: '100%', maxWidth: 520, maxHeight: '85vh', overflowY: 'auto' }}>
             <h2 style={{ margin: '0 0 16px' }}>פרטי הזמנה</h2>
 
             {[
