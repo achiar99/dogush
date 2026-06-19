@@ -26,6 +26,8 @@ import {
   listOrdersByUser,
   getOrder,
   OutOfStockError,
+  recordPageView,
+  listPageViews,
 } from './dynamodb';
 import { getPresignedUploadUrl } from './s3';
 import { SNSClient, PublishCommand } from '@aws-sdk/client-sns';
@@ -100,6 +102,52 @@ function requireAdmin(
 }
 
 // ─── Public routes ────────────────────────────────────────────────────────────
+
+const TRACKING_BLACKLIST = new Set(['147.235.221.45']);
+
+app.post('/api/track', async (req, res) => {
+  try {
+    const ip = (req.headers['x-forwarded-for'] as string || '').split(',')[0].trim() || req.socket.remoteAddress || '';
+    if (TRACKING_BLACKLIST.has(ip)) { res.status(204).end(); return; }
+    const { page, source, sessionId, referrer, userAgent, screenWidth, language } = req.body;
+
+    let city: string | undefined;
+    let country: string | undefined;
+    let region: string | undefined;
+
+    if (ip && ip !== '127.0.0.1' && !ip.startsWith('::')) {
+      try {
+        const geo = await fetch(`http://ip-api.com/json/${ip}?fields=city,country,regionName`);
+        if (geo.ok) {
+          const g = await geo.json() as { city?: string; country?: string; regionName?: string };
+          city = g.city;
+          country = g.country;
+          region = g.regionName;
+        }
+      } catch { /* geo lookup is best-effort */ }
+    }
+
+    await recordPageView({
+      timestamp: new Date().toISOString(),
+      page: page || '/',
+      source: source || 'direct',
+      sessionId: sessionId || '',
+      referrer: referrer || '',
+      userAgent: userAgent || '',
+      screenWidth: Number(screenWidth) || 0,
+      language: language || '',
+      ip,
+      city,
+      country,
+      region,
+    });
+
+    res.status(204).end();
+  } catch (error) {
+    console.error('Track error:', error);
+    res.status(204).end();
+  }
+});
 
 app.get('/api/products', async (_req, res) => {
   try {
@@ -375,6 +423,19 @@ app.get('/api/admin/stats', requireAdmin, async (req, res) => {
   } catch (error) {
     console.error('Stats error:', error);
     res.status(500).json({ error: 'Failed to fetch stats' });
+  }
+});
+
+// ─── Admin: analytics ────────────────────────────────────────────────────────
+app.get('/api/admin/analytics', requireAdmin, async (req, res) => {
+  try {
+    const from = req.query.from as string | undefined;
+    const to = req.query.to as string | undefined;
+    const views = await listPageViews(from, to);
+    res.json(views);
+  } catch (error) {
+    console.error('Analytics error:', error);
+    res.status(500).json({ error: 'Failed to fetch analytics' });
   }
 });
 

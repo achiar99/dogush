@@ -4,6 +4,7 @@ import Header from '../components/Header';
 import WhatsAppButton from '../components/WhatsAppButton';
 import type { Item } from '../api/items';
 import heConfig from '../../../shared/he.json';
+import { trackPageView } from '../api/track';
 
 interface Category {
   key: string;
@@ -21,6 +22,8 @@ export default function Menu() {
   const [cartOpen, setCartOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
+
+  useEffect(() => { trackPageView(); }, []);
 
   useEffect(() => {
     Promise.all([

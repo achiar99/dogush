@@ -356,6 +356,44 @@ export async function listOrdersByUser(userId: string): Promise<Order[]> {
   return orders.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 }
 
+// ─── Page Views ──────────────────────────────────────────────────────────────
+const PAGE_VIEWS_TABLE = process.env.PAGE_VIEWS_TABLE || `pet-store-${ENV}-PageViews`;
+
+export interface PageView {
+  visitId: string;
+  timestamp: string;
+  date: string;
+  page: string;
+  source: string;
+  sessionId: string;
+  referrer: string;
+  userAgent: string;
+  screenWidth: number;
+  language: string;
+  ip: string;
+  city?: string;
+  country?: string;
+  region?: string;
+}
+
+export async function recordPageView(data: Omit<PageView, 'visitId' | 'date'>): Promise<void> {
+  const visitId = randomUUID();
+  const date = data.timestamp.slice(0, 10);
+  const ttl = Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 365;
+  await docClient.send(new PutCommand({
+    TableName: PAGE_VIEWS_TABLE,
+    Item: { ...data, visitId, date, ttl },
+  }));
+}
+
+export async function listPageViews(fromDate?: string, toDate?: string): Promise<PageView[]> {
+  const result = await docClient.send(new ScanCommand({ TableName: PAGE_VIEWS_TABLE }));
+  let views = (result.Items || []) as PageView[];
+  if (fromDate) views = views.filter(v => v.date >= fromDate);
+  if (toDate) views = views.filter(v => v.date <= toDate);
+  return views.sort((a, b) => b.timestamp.localeCompare(a.timestamp));
+}
+
 // ─── Legacy stats (for dashboard) ────────────────────────────────────────────
 export interface OrderStats {
   foodId: string;

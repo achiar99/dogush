@@ -1,121 +1,199 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import AdminLayout from '../components/AdminLayout';
-import heConfig from '../../../shared/he.json';
 import { adminFetch } from '../api/adminFetch';
 
-const { strings } = heConfig as {
-  strings: {
-    adminDashboardTitle: string;
-    tableHeaderName: string;
-    tableHeaderPrice: string;
-    tableHeaderOrders: string;
-    tableHeaderCategory: string;
-    tableHeaderActive: string;
-    loading: string;
-  };
-};
+interface Product { id: string; name: string; orderCount: number; active: boolean; }
+interface Order { orderId: string; status: string; createdAt: string; total: number; items: { id: string; quantity: number }[]; }
+interface PageView { date: string; timestamp: string; sessionId: string; }
 
-interface FoodItem {
-  id: string;
-  name: string;
-  price: number;
-  orderCount: number;
-  category: string;
-  active: boolean;
+const STATUS_LABELS: Record<string, string> = {
+  open: 'פתוח', inProgress: 'בטיפול', completed: 'הושלם', cancelled: 'בוטל',
+};
+const STATUS_COLORS: Record<string, string> = {
+  open: '#f59e0b', inProgress: '#3b82f6', completed: '#22c55e', cancelled: '#ef4444',
+};
+const CHART_COLORS = ['#c15f2a','#3b82f6','#22c55e','#f59e0b','#8b5cf6','#ec4899','#14b8a6','#f97316'];
+
+function PieChart({ slices }: { slices: { label: string; value: number; color: string }[] }) {
+  const total = slices.reduce((s, x) => s + x.value, 0);
+  if (total === 0) return <div style={{ color: '#aaa', fontSize: 13, textAlign: 'center', padding: 24 }}>אין נתונים</div>;
+
+  let offset = 0;
+  const paths = slices.map(s => {
+    const pct = s.value / total;
+    const start = offset;
+    offset += pct;
+    if (pct === 0) return null;
+    const a1 = start * 2 * Math.PI - Math.PI / 2;
+    const a2 = offset * 2 * Math.PI - Math.PI / 2;
+    const r = 80;
+    const cx = 100, cy = 100;
+    const x1 = cx + r * Math.cos(a1), y1 = cy + r * Math.sin(a1);
+    const x2 = cx + r * Math.cos(a2), y2 = cy + r * Math.sin(a2);
+    const large = pct > 0.5 ? 1 : 0;
+    return <path key={s.label} d={`M${cx},${cy} L${x1},${y1} A${r},${r} 0 ${large},1 ${x2},${y2} Z`} fill={s.color} stroke="#fff" strokeWidth={2} />;
+  });
+
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 24, flexWrap: 'wrap' }}>
+      <svg viewBox="0 0 200 200" style={{ width: 160, height: 160, flexShrink: 0 }}>{paths}</svg>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {slices.filter(s => s.value > 0).map(s => (
+          <div key={s.label} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13 }}>
+            <div style={{ width: 12, height: 12, borderRadius: 3, background: s.color, flexShrink: 0 }} />
+            <span style={{ fontWeight: 600 }}>{s.label}</span>
+            <span style={{ color: '#888' }}>({s.value} — {Math.round((s.value / total) * 100)}%)</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }
 
-interface Category {
-  key: string;
-  name: string;
+function BarChart({ data, color = '#c15f2a' }: { data: { label: string; value: number }[]; color?: string }) {
+  const max = Math.max(...data.map(d => d.value), 1);
+  return (
+    <div style={{ display: 'flex', alignItems: 'flex-end', gap: 5, height: 120 }}>
+      {data.map(d => (
+        <div key={d.label} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
+          <div style={{ fontSize: 10, color: '#888', fontWeight: 600 }}>{d.value || ''}</div>
+          <div style={{
+            width: '100%', borderRadius: '5px 5px 0 0',
+            background: d.value > 0 ? color : '#f0ebe1',
+            height: `${Math.max((d.value / max) * 90, d.value > 0 ? 4 : 0)}px`,
+            transition: 'height 0.4s',
+          }} />
+          <div style={{ fontSize: 9, color: '#aaa', whiteSpace: 'nowrap', transform: 'rotate(-35deg)', transformOrigin: 'top center', marginTop: 4 }}>
+            {d.label}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function Card({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div style={{ background: '#fff', borderRadius: 16, padding: 24, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
+      <h3 style={{ margin: '0 0 20px', fontSize: 15, fontWeight: 800, color: '#1e1e2e' }}>{title}</h3>
+      {children}
+    </div>
+  );
 }
 
 export default function AdminDashboard() {
-  const [foods, setFoods] = useState<FoodItem[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [views, setViews] = useState<PageView[]>([]);
   const [loading, setLoading] = useState(true);
-  const [fromDate, setFromDate] = useState('');
-  const [toDate, setToDate] = useState('');
 
   useEffect(() => {
-    adminFetch('/api/admin/categories')
-      .then(r => r.json())
-      .then(data => setCategories(Array.isArray(data) ? data : []))
-      .catch(() => {});
+    Promise.all([
+      adminFetch('/api/admin/stats').then(r => r.json()),
+      adminFetch('/api/admin/orders').then(r => r.json()),
+      adminFetch('/api/admin/analytics').then(r => r.json()),
+    ]).then(([prods, ords, pvs]) => {
+      setProducts(Array.isArray(prods) ? prods : []);
+      setOrders(Array.isArray(ords) ? ords : []);
+      setViews(Array.isArray(pvs) ? pvs : []);
+    }).catch(() => {}).finally(() => setLoading(false));
   }, []);
 
-  useEffect(() => {
-    setLoading(true);
-    const params = new URLSearchParams();
-    if (fromDate) params.append('from', fromDate);
-    if (toDate) params.append('to', toDate);
-    const query = params.toString();
-    adminFetch(`/api/admin/stats${query ? `?${query}` : ''}`)
-      .then(r => r.json())
-      .then(data => setFoods(Array.isArray(data) ? data : []))
-      .catch(() => setFoods([]))
-      .finally(() => setLoading(false));
-  }, [fromDate, toDate]);
+  // Last 14 days axis
+  const days14 = Array.from({ length: 14 }, (_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() - (13 - i));
+    return d.toISOString().slice(0, 10);
+  });
 
-  const categoryNames = useMemo(() => {
-    const map: Record<string, string> = {};
-    for (const cat of categories) map[cat.key] = cat.name;
-    return map;
-  }, [categories]);
+  const ordersByDay = days14.map(date => ({
+    label: date.slice(5),
+    value: orders.filter(o => o.createdAt?.slice(0, 10) === date).length,
+  }));
+
+  const viewsByDay = days14.map(date => ({
+    label: date.slice(5),
+    value: views.filter(v => v.date === date).length,
+  }));
+
+  const uniqueVisitorsByDay = days14.map(date => ({
+    label: date.slice(5),
+    value: new Set(views.filter(v => v.date === date).map(v => v.sessionId)).size,
+  }));
+
+  // Pie: orders by product (top 8)
+  const orderCountByProduct = products
+    .filter(p => p.orderCount > 0)
+    .sort((a, b) => b.orderCount - a.orderCount)
+    .slice(0, 8);
+
+  const productSlices = orderCountByProduct.map((p, i) => ({
+    label: p.name,
+    value: p.orderCount,
+    color: CHART_COLORS[i % CHART_COLORS.length],
+  }));
+
+  // Pie: order status
+  const statusCounts: Record<string, number> = {};
+  for (const o of orders) statusCounts[o.status] = (statusCounts[o.status] || 0) + 1;
+  const statusSlices = Object.entries(statusCounts).map(([s, v]) => ({
+    label: STATUS_LABELS[s] || s, value: v, color: STATUS_COLORS[s] || '#aaa',
+  }));
+
+  // KPIs
+  const totalRevenue = orders.filter(o => o.status !== 'cancelled').reduce((s, o) => s + (o.total || 0), 0);
+  const todayOrders = orders.filter(o => o.createdAt?.slice(0, 10) === new Date().toISOString().slice(0, 10)).length;
+  const todayViews = views.filter(v => v.date === new Date().toISOString().slice(0, 10)).length;
+  const uniqueVisitors = new Set(views.map(v => v.sessionId)).size;
 
   return (
     <AdminLayout>
-      <h1 style={{ direction: 'rtl', marginBottom: 20 }}>{strings.adminDashboardTitle}</h1>
+      <div style={{ direction: 'rtl' }}>
+        <h1 style={{ margin: '0 0 24px', fontSize: 24, fontWeight: 900 }}>📊 לוח בקרה</h1>
 
-      <div style={{ marginBottom: 20, display: 'flex', gap: 16, alignItems: 'center' }}>
-        <input
-          type="date"
-          value={fromDate}
-          onChange={e => setFromDate(e.target.value)}
-          style={{ padding: 8, borderRadius: 4, border: '1px solid #ccc' }}
-        />
-        <span>עד</span>
-        <input
-          type="date"
-          value={toDate}
-          onChange={e => setToDate(e.target.value)}
-          style={{ padding: 8, borderRadius: 4, border: '1px solid #ccc' }}
-        />
-        {(fromDate || toDate) && (
-          <button onClick={() => { setFromDate(''); setToDate(''); }} style={{ padding: '8px 14px', borderRadius: 4, border: '1px solid #ccc', cursor: 'pointer' }}>
-            נקה
-          </button>
+        {loading ? <p>טוען...</p> : (
+          <>
+            {/* KPIs */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 24 }}>
+              {[
+                { label: 'הזמנות סה״כ', value: orders.length, icon: '🛒' },
+                { label: 'הזמנות היום', value: todayOrders, icon: '📦' },
+                { label: 'כניסות היום', value: todayViews, icon: '👁️' },
+                { label: `הכנסות ₪`, value: totalRevenue.toLocaleString(), icon: '💰' },
+              ].map(k => (
+                <div key={k.label} style={{ background: '#fff', borderRadius: 16, padding: '20px 24px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
+                  <div style={{ fontSize: 26, marginBottom: 6 }}>{k.icon}</div>
+                  <div style={{ fontSize: 30, fontWeight: 900, color: '#1e1e2e' }}>{k.value}</div>
+                  <div style={{ fontSize: 12, color: '#888', marginTop: 4 }}>{k.label}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* Daily orders chart */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 20 }}>
+              <Card title="📦 הזמנות יומיות (14 ימים)">
+                <BarChart data={ordersByDay} color="#c15f2a" />
+              </Card>
+              <Card title="👁️ כניסות יומיות (14 ימים)">
+                <BarChart data={viewsByDay} color="#3b82f6" />
+              </Card>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 20 }}>
+              <Card title="👤 מבקרים ייחודיים יומי">
+                <BarChart data={uniqueVisitorsByDay} color="#8b5cf6" />
+              </Card>
+              <Card title="🔘 סטטוס הזמנות">
+                <PieChart slices={statusSlices} />
+              </Card>
+            </div>
+
+            <Card title="🏆 הזמנות לפי מוצר">
+              <PieChart slices={productSlices} />
+            </Card>
+          </>
         )}
       </div>
-
-      {loading ? (
-        <p style={{ direction: 'rtl' }}>{strings.loading}</p>
-      ) : (
-        <table style={{ width: '100%', borderCollapse: 'collapse', direction: 'rtl' }}>
-          <thead>
-            <tr style={{ backgroundColor: '#f9f9f9', borderBottom: '2px solid #eee' }}>
-              <th style={{ textAlign: 'right', padding: 12 }}>{strings.tableHeaderName}</th>
-              <th style={{ textAlign: 'right', padding: 12 }}>{strings.tableHeaderCategory}</th>
-              <th style={{ textAlign: 'right', padding: 12 }}>{strings.tableHeaderPrice}</th>
-              <th style={{ textAlign: 'center', padding: 12 }}>{strings.tableHeaderOrders}</th>
-              <th style={{ textAlign: 'center', padding: 12 }}>{strings.tableHeaderActive}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {foods.map(food => (
-              <tr key={food.id} style={{ borderBottom: '1px solid #eee', backgroundColor: food.active ? '#d4edda' : '#f8d7da' }}>
-                <td style={{ padding: 12 }}>{food.name}</td>
-                <td style={{ padding: 12 }}>{categoryNames[food.category] || food.category}</td>
-                <td style={{ padding: 12 }}>{food.price} ₪</td>
-                <td style={{ textAlign: 'center', padding: 12 }}>{food.orderCount}</td>
-                <td style={{ textAlign: 'center', padding: 12 }}>{food.active ? '✓' : '✗'}</td>
-              </tr>
-            ))}
-            {foods.length === 0 && (
-              <tr><td colSpan={5} style={{ padding: 20, textAlign: 'center', color: '#888' }}>אין נתונים</td></tr>
-            )}
-          </tbody>
-        </table>
-      )}
     </AdminLayout>
   );
 }
