@@ -322,6 +322,12 @@ export async function getUserById(userId: string): Promise<User | null> {
   return (result.Item as User) ?? null;
 }
 
+export async function listUsers(): Promise<User[]> {
+  const result = await docClient.send(new ScanCommand({ TableName: USERS_TABLE }));
+  const users = (result.Items || []) as User[];
+  return users.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+}
+
 export async function createUser(data: Omit<User, 'userId' | 'createdAt'>): Promise<User> {
   const user: User = { ...data, userId: randomUUID(), createdAt: new Date().toISOString() };
   await docClient.send(new PutCommand({ TableName: USERS_TABLE, Item: user }));

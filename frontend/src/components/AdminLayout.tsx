@@ -10,6 +10,7 @@ const { strings } = heConfig as {
     adminNavOrders: string;
     adminNavCategories: string;
     adminNavAnalytics: string;
+    adminNavCustomers: string;
   };
 };
 
@@ -19,6 +20,7 @@ const navItems = (strings: any) => [
   { to: '/admin/categories', label: strings.adminNavCategories, icon: '🏷️' },
   { to: '/admin/orders',     label: strings.adminNavOrders,     icon: '🛒' },
   { to: '/admin/analytics',  label: strings.adminNavAnalytics,  icon: '📈' },
+  { to: '/admin/customers',  label: strings.adminNavCustomers,  icon: '👥' },
 ];
 
 export default function AdminLayout({ children }: { children: ReactNode }) {

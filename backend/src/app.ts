@@ -23,6 +23,7 @@ import {
   getUserById,
   createUser,
   updateUser,
+  listUsers,
   listOrdersByUser,
   getOrder,
   OutOfStockError,
@@ -423,6 +424,25 @@ app.get('/api/admin/stats', requireAdmin, async (req, res) => {
   } catch (error) {
     console.error('Stats error:', error);
     res.status(500).json({ error: 'Failed to fetch stats' });
+  }
+});
+
+// ─── Admin: users ────────────────────────────────────────────────────────────
+app.get('/api/admin/users', requireAdmin, async (_req, res) => {
+  try {
+    const users = await listUsers();
+    res.json(users.map(({ passwordHash: _, ...u }) => u));
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch users' });
+  }
+});
+
+app.get('/api/admin/users/:id/orders', requireAdmin, async (req, res) => {
+  try {
+    const orders = await listOrdersByUser(String(req.params.id));
+    res.json(orders);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch user orders' });
   }
 });
 
