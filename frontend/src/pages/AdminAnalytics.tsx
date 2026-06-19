@@ -122,21 +122,20 @@ export default function AdminAnalytics() {
 
             {/* Daily chart */}
             {range !== 1 && (
-              <div style={{ background: '#fff', borderRadius: 16, padding: 24, marginBottom: 24, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
-                <h3 style={{ margin: '0 0 20px', fontSize: 16, fontWeight: 700 }}>כניסות לפי יום</h3>
-                <div style={{ display: 'flex', alignItems: 'flex-end', gap: 6, height: 120 }}>
+              <div style={{ background: '#fff', borderRadius: 16, padding: '20px 16px 12px', marginBottom: 24, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
+                <h3 style={{ margin: '0 0 16px', fontSize: 16, fontWeight: 700 }}>כניסות לפי יום</h3>
+                <div style={{ display: 'flex', alignItems: 'flex-end', gap: 4, height: 110, overflow: 'hidden' }}>
                   {dayEntries.map(([date, cnt]) => (
-                    <div key={date} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-                      <div style={{ fontSize: 10, color: '#aaa', fontWeight: 600 }}>{cnt || ''}</div>
+                    <div key={date} style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+                      <div style={{ fontSize: 9, color: '#888', fontWeight: 600, lineHeight: 1 }}>{cnt || ''}</div>
                       <div style={{
-                        width: '100%', borderRadius: '6px 6px 0 0',
+                        width: '80%', borderRadius: '4px 4px 0 0',
                         background: cnt > 0 ? '#c15f2a' : '#f0ebe1',
-                        height: `${Math.max((cnt / maxDay) * 90, cnt > 0 ? 4 : 0)}px`,
-                        minHeight: cnt > 0 ? 4 : 0,
+                        height: `${Math.max((cnt / maxDay) * 75, cnt > 0 ? 4 : 2)}px`,
                         transition: 'height 0.3s',
                       }} />
-                      <div style={{ fontSize: 9, color: '#aaa', transform: 'rotate(-30deg)', transformOrigin: 'top center', whiteSpace: 'nowrap', marginTop: 4 }}>
-                        {date.slice(5)}
+                      <div style={{ fontSize: 8, color: '#bbb', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%', textAlign: 'center', lineHeight: 1.2, marginTop: 2 }}>
+                        {date.slice(8)}/{date.slice(5, 7)}
                       </div>
                     </div>
                   ))}
@@ -165,10 +164,12 @@ export default function AdminAnalytics() {
               </div>
             </div>
 
-            {/* Recent visits table */}
+            {/* Recent visits */}
             <div style={{ background: '#fff', borderRadius: 16, padding: 24, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
               <h3 style={{ margin: '0 0 16px', fontSize: 16, fontWeight: 700 }}>כניסות אחרונות</h3>
-              <div style={{ overflowX: 'auto' }}>
+
+              {/* Desktop table */}
+              <div className="analytics-table-wrap">
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
                   <thead>
                     <tr style={{ borderBottom: '2px solid #f0f0f0', color: '#888' }}>
@@ -202,6 +203,31 @@ export default function AdminAnalytics() {
                   </tbody>
                 </table>
               </div>
+
+              {/* Mobile cards */}
+              <div className="analytics-cards-wrap">
+                {filtered.length === 0 && <p style={{ textAlign: 'center', color: '#aaa', fontSize: 13 }}>אין נתונים עדיין</p>}
+                {filtered.slice(0, 50).map(v => (
+                  <div key={v.visitId} style={{ borderBottom: '1px solid #f0f0f0', padding: '10px 0', direction: 'rtl' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                      <div>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: '#333' }}>
+                          {v.city || '—'}{v.country ? `, ${v.country}` : ''}
+                        </div>
+                        <div style={{ fontSize: 11, color: '#aaa', marginTop: 2 }}>
+                          {new Date(v.timestamp).toLocaleString('he-IL', { dateStyle: 'short', timeStyle: 'short' })}
+                          {v.screenWidth ? ` · ${v.screenWidth}px` : ''}
+                        </div>
+                      </div>
+                      <span style={{
+                        padding: '2px 10px', borderRadius: 999, fontSize: 11, fontWeight: 700, flexShrink: 0,
+                        background: v.source === 'qr' ? '#fef3c7' : v.source === 'direct' ? '#f0f0f0' : '#dbeafe',
+                        color: v.source === 'qr' ? '#92400e' : v.source === 'direct' ? '#666' : '#1e40af',
+                      }}>{v.source}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </>
         )}
@@ -217,9 +243,13 @@ export default function AdminAnalytics() {
             grid-template-columns: 1fr 1fr;
             gap: 16px;
           }
+          .analytics-table-wrap { display: block; }
+          .analytics-cards-wrap { display: none; }
           @media (max-width: 600px) {
             .admin-kpi-grid { grid-template-columns: repeat(2, 1fr); }
             .admin-2col-grid { grid-template-columns: 1fr; }
+            .analytics-table-wrap { display: none; }
+            .analytics-cards-wrap { display: block; }
           }
         `}</style>
       </div>
