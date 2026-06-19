@@ -21,6 +21,7 @@ export default function Menu() {
   const [error, setError] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const [search, setSearch] = useState('');
   const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
 
   useEffect(() => { trackPageView(); }, []);
@@ -81,13 +82,47 @@ export default function Menu() {
     sectionRefs.current[key]?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
+  const searchResults = useMemo(() => {
+    if (!search.trim()) return null;
+    const q = search.toLowerCase();
+    return items.filter(i => i.active !== false && (
+      i.name?.toLowerCase().includes(q) || i.description?.toLowerCase().includes(q)
+    ));
+  }, [search, items]);
+
   if (loading) return <div className="page"><Header /><p style={{ textAlign: 'center', marginTop: 40 }}>{heConfig.strings.loading}</p></div>;
   if (error)   return <div className="page"><Header /><p style={{ textAlign: 'center', marginTop: 40 }}>{heConfig.strings.errorLoadingMenu}</p></div>;
 
   return (
     <div className="page">
       <Header cartOpen={cartOpen} onCartOpenChange={setCartOpen} />
-      {visibleCategories.length > 1 && (
+
+      {/* Search bar */}
+      <div className="searchBar">
+        <div style={{ position: 'relative', width: '100%', maxWidth: 400 }}>
+          <span style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 15, pointerEvents: 'none', color: '#aaa' }}>🔍</span>
+          <input
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder={heConfig.strings.searchPlaceholder}
+            style={{
+              width: '100%', padding: '8px 38px 8px 36px', borderRadius: 999,
+              border: '1.5px solid #ddd3c4', fontSize: '0.9rem',
+              fontFamily: 'inherit', outline: 'none', background: '#fff',
+              color: '#333', direction: 'rtl', boxSizing: 'border-box',
+            }}
+          />
+          {search && (
+            <button onClick={() => setSearch('')} style={{
+              position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)',
+              background: 'none', border: 'none', cursor: 'pointer', color: '#aaa', fontSize: 14, padding: 0,
+            }}>✕</button>
+          )}
+        </div>
+      </div>
+
+      {/* Category nav pills */}
+      {!search && visibleCategories.length > 1 && (
         <nav className="categoryNav">
           {visibleCategories.map(cat => (
             <button
@@ -100,20 +135,35 @@ export default function Menu() {
           ))}
         </nav>
       )}
-      {visibleCategories.map(cat => (
-        <section
-          key={cat.key}
-          className="menuSection"
-          ref={el => { sectionRefs.current[cat.key] = el; }}
-        >
-          <h2 className="menuSection__title">{cat.name}</h2>
+
+      {/* Search results */}
+      {searchResults !== null ? (
+        <section className="menuSection">
+          <h2 className="menuSection__title">
+            {searchResults.length > 0 ? `${searchResults.length} תוצאות` : 'לא נמצאו תוצאות'}
+          </h2>
           <div className="menuGrid">
-            {(byCategory[cat.key] ?? []).map(item => (
+            {searchResults.map(item => (
               <ItemCard key={item.id} item={item} onOrderNow={() => setCartOpen(true)} />
             ))}
           </div>
         </section>
-      ))}
+      ) : (
+        visibleCategories.map(cat => (
+          <section
+            key={cat.key}
+            className="menuSection"
+            ref={el => { sectionRefs.current[cat.key] = el; }}
+          >
+            <h2 className="menuSection__title">{cat.name}</h2>
+            <div className="menuGrid">
+              {(byCategory[cat.key] ?? []).map(item => (
+                <ItemCard key={item.id} item={item} onOrderNow={() => setCartOpen(true)} />
+              ))}
+            </div>
+          </section>
+        ))
+      )}
       <WhatsAppButton />
     </div>
   );

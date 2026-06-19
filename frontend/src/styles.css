@@ -94,9 +94,22 @@ a {
 }
 
 /* Category nav */
-.categoryNav {
+.searchBar {
   position: sticky;
   top: 0;
+  z-index: 51;
+  background: rgba(251, 247, 238, 0.96);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.07);
+  padding: 10px 16px;
+  display: flex;
+  justify-content: center;
+}
+
+.categoryNav {
+  position: sticky;
+  top: 53px;
   z-index: 50;
   background: rgba(251, 247, 238, 0.96);
   backdrop-filter: blur(10px);
