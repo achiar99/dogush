@@ -26,58 +26,53 @@ export default function Header({
   const [cartOpenInternal, setCartOpenInternal] = useState(false);
   const cartOpen = cartOpenProp !== undefined ? cartOpenProp : cartOpenInternal;
   const setCartOpen = (v: boolean) => { setCartOpenInternal(v); onCartOpenChange?.(v); };
-  // When cart is opened from outside (onCartOpenChange / Order Now), go straight to checkout
   const cartFromOrderNow = cartOpenProp === true && cartOpenInternal === false;
   const [authOpen, setAuthOpen] = useState(false);
 
   return (
     <>
-      <header className="hero" style={{ position: 'relative' }}>
+      <header className="hero">
+        {/* Top bar: cart left, nav right */}
         {showCart && (
-          <div style={{ position: 'absolute', top: 16, right: 16, zIndex: 10, display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end', maxWidth: '60vw' }}>
-            <button onClick={() => navigate('/track')} style={ghostBtn}>📦 מעקב הזמנה</button>
-            {user ? (
-              <>
-                <button onClick={() => navigate('/orders')} style={ghostBtn}>
-                  📦 ההזמנות שלי
-                </button>
-                <button onClick={logout} style={ghostBtn}>
-                  התנתק
-                </button>
-              </>
-            ) : (
-              <button onClick={() => setAuthOpen(true)} style={ghostBtn}>
-                👤 התחבר / הרשם
-              </button>
-            )}
+          <div style={{
+            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+            marginBottom: 24, position: 'relative', zIndex: 10,
+          }}>
+            {/* Cart button - left */}
+            <button
+              onClick={() => setCartOpen(true)}
+              aria-label="סל קניות"
+              style={{ ...ghostBtn, display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.95rem' }}
+            >
+              <span style={{ fontSize: 20 }}>🛒</span>
+              {count > 0 && (
+                <span style={{
+                  background: '#e74c3c', color: '#fff', borderRadius: 999,
+                  minWidth: 20, height: 20, padding: '0 5px',
+                  fontSize: 11, fontWeight: 800,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>
+                  {count > 99 ? '99+' : count}
+                </span>
+              )}
+            </button>
+
+            {/* Nav buttons - right */}
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+              <button onClick={() => navigate('/track')} style={ghostBtn}>📦 מעקב הזמנה</button>
+              {user ? (
+                <>
+                  <button onClick={() => navigate('/orders')} style={ghostBtn}>ההזמנות שלי</button>
+                  <button onClick={logout} style={ghostBtn}>התנתק</button>
+                </>
+              ) : (
+                <button onClick={() => setAuthOpen(true)} style={ghostBtn}>👤 התחבר / הרשם</button>
+              )}
+            </div>
           </div>
         )}
 
-        {showCart && <button
-          onClick={() => setCartOpen(true)}
-          aria-label="סל קניות"
-          style={{
-            position: 'absolute', top: 16, left: 16, zIndex: 10,
-            background: 'rgba(255,255,255,0.18)', border: '1.5px solid rgba(255,255,255,0.55)',
-            borderRadius: 12, padding: '8px 14px',
-            cursor: 'pointer', color: '#fff', fontWeight: 700, fontSize: '0.95rem',
-            display: 'flex', alignItems: 'center', gap: 8,
-            backdropFilter: 'blur(6px)',
-          }}
-        >
-          <span style={{ fontSize: 20 }}>🛒</span>
-          {count > 0 && (
-            <span style={{
-              background: '#e74c3c', color: '#fff', borderRadius: 999,
-              minWidth: 20, height: 20, padding: '0 5px',
-              fontSize: 11, fontWeight: 800,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}>
-              {count > 99 ? '99+' : count}
-            </span>
-          )}
-        </button>}
-
+        {/* Logo + title centered */}
         <div className="hero__logoRow">
           <Link to="/">
             {logoImageFile ? (
@@ -101,5 +96,5 @@ const ghostBtn: React.CSSProperties = {
   background: 'rgba(255,255,255,0.18)', border: '1.5px solid rgba(255,255,255,0.55)',
   borderRadius: 10, padding: '7px 12px', cursor: 'pointer', color: '#fff',
   fontWeight: 600, fontSize: '0.85rem', backdropFilter: 'blur(6px)',
-  whiteSpace: 'nowrap',
+  whiteSpace: 'nowrap', fontFamily: 'inherit',
 };
