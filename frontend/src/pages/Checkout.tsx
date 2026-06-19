@@ -1,0 +1,277 @@
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useCart } from '../context/CartContext';
+import { useUser } from '../context/UserContext';
+import Header from '../components/Header';
+
+const API = import.meta.env.VITE_API_BASE_URL || '';
+
+type Step = 'cart' | 'auth' | 'authForm' | 'details';
+
+const inputStyle: React.CSSProperties = {
+  width: '100%', padding: '11px 14px', border: '1.5px solid #e0d8cc',
+  borderRadius: 10, fontSize: '1rem', boxSizing: 'border-box', outline: 'none',
+  fontFamily: 'inherit', background: '#fff',
+};
+
+export default function Checkout() {
+  const navigate = useNavigate();
+  const { items, remove, updateQty, clear, total } = useCart();
+  const { user, token, login } = useUser();
+
+  const [step, setStep] = useState<Step>(user ? 'details' : 'cart');
+  const [form, setForm] = useState({
+    customer: user?.name || '',
+    phone: user?.phone || '',
+    address: user?.address || '',
+    email: user?.email || '',
+  });
+  const [submitting, setSubmitting] = useState(false);
+  const [done, setDone] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
+  const [authForm, setAuthForm] = useState({ email: '', password: '', name: '', phone: '', address: '' });
+  const [authLoading, setAuthLoading] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
+
+  const handleAuth = async () => {
+    setAuthError(null);
+    if (!authForm.email || !authForm.password) { setAuthError('יש למלא אימייל וסיסמה'); return; }
+    if (authMode === 'register' && !authForm.name) { setAuthError('יש למלא שם'); return; }
+    if (authMode === 'register' && !authForm.phone) { setAuthError('יש למלא טלפון'); return; }
+    setAuthLoading(true);
+    try {
+      const body = authMode === 'login'
+        ? { email: authForm.email, password: authForm.password }
+        : { email: authForm.email, password: authForm.password, name: authForm.name, phone: authForm.phone, address: authForm.address };
+      const res = await fetch(`${API}/api/auth/${authMode}`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json();
+      if (!res.ok) { setAuthError(data.error || 'שגיאה'); return; }
+      login(data.token, data.user);
+      setForm({ customer: data.user.name || '', phone: data.user.phone || '', address: data.user.address || '', email: data.user.email || '' });
+      setStep('details');
+    } catch { setAuthError('שגיאת חיבור'); }
+    finally { setAuthLoading(false); }
+  };
+
+  const handleOrder = async () => {
+    if (!form.customer.trim()) { setError('שם חובה'); return; }
+    if (!form.phone.trim()) { setError('טלפון חובה'); return; }
+    setSubmitting(true); setError(null);
+    try {
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      const res = await fetch(`${API}/api/orders`, {
+        method: 'POST', headers,
+        body: JSON.stringify({
+          customer: form.customer, phone: form.phone,
+          address: form.address, email: form.email,
+          items: items.map(i => ({ id: i.id, quantity: i.quantity })), total,
+        }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        if (body.error === 'out_of_stock') throw new Error('מוצר אחד או יותר אזל מהמלאי. רענן את הדף ונסה שנית.');
+        throw new Error('שגיאה בשליחת הזמנה');
+      }
+      clear();
+      setDone(true);
+    } catch (e: any) { setError(e.message ?? 'שגיאה'); }
+    finally { setSubmitting(false); }
+  };
+
+  if (done) {
+    return (
+      <div className="page">
+        <Header showCart={false} />
+        <div style={{ maxWidth: 480, margin: '60px auto', padding: '0 20px', textAlign: 'center', direction: 'rtl' }}>
+          <div style={{ fontSize: 72, marginBottom: 20 }}>✅</div>
+          <h2 style={{ fontSize: 24, fontWeight: 900, marginBottom: 10 }}>ההזמנה התקבלה!</h2>
+          <p style={{ color: '#666', marginBottom: 32 }}>תודה, ניצור קשר בקרוב.</p>
+          <button onClick={() => navigate('/')} style={{ padding: '12px 32px', background: '#c15f2a', color: '#fff', border: 'none', borderRadius: 12, fontWeight: 700, fontSize: '1rem', cursor: 'pointer', fontFamily: 'inherit' }}>
+            חזור לחנות
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="page" style={{ minHeight: '100vh', background: '#fbf7ee' }}>
+      <Header showCart={false} />
+
+      <div style={{ maxWidth: 560, margin: '0 auto', padding: '24px 16px 60px', direction: 'rtl' }}>
+
+        {/* ── Step: Cart review ── */}
+        {step === 'cart' && (
+          <>
+            <h2 style={{ fontSize: 22, fontWeight: 900, marginBottom: 20 }}>סל הקניות שלך</h2>
+
+            {items.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '60px 0', color: '#aaa' }}>
+                <div style={{ fontSize: 52, marginBottom: 12 }}>🛒</div>
+                <p>הסל ריק</p>
+                <button onClick={() => navigate('/')} style={{ marginTop: 16, padding: '10px 24px', background: '#c15f2a', color: '#fff', border: 'none', borderRadius: 10, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+                  חזור לחנות
+                </button>
+              </div>
+            ) : (
+              <>
+                <div style={{ background: '#fff', borderRadius: 16, boxShadow: '0 2px 10px rgba(0,0,0,0.07)', overflow: 'hidden', marginBottom: 20 }}>
+                  {items.map((item, i) => (
+                    <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px', borderBottom: i < items.length - 1 ? '1px solid #f0f0f0' : 'none' }}>
+                      <div style={{ width: 56, height: 56, borderRadius: 10, overflow: 'hidden', flexShrink: 0, background: '#f4f0e2', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        {item.imageFile ? <img src={item.imageFile} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span style={{ fontSize: 24 }}>🐾</span>}
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontWeight: 700, fontSize: 15, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.name}</div>
+                        <div style={{ color: '#888', fontSize: 13, marginTop: 2 }}>{item.price} ₪ ליחידה</div>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <button onClick={() => updateQty(item.id, item.quantity - 1)} style={qtyBtn}>−</button>
+                        <span style={{ minWidth: 24, textAlign: 'center', fontWeight: 700 }}>{item.quantity}</span>
+                        <button onClick={() => updateQty(item.id, item.quantity + 1)} style={qtyBtn}>+</button>
+                      </div>
+                      <div style={{ fontWeight: 800, fontSize: 15, minWidth: 55, textAlign: 'left' }}>{item.price * item.quantity} ₪</div>
+                      <button onClick={() => remove(item.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ccc', fontSize: 18, padding: 4 }}>✕</button>
+                    </div>
+                  ))}
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#fff', borderRadius: 14, padding: '16px 20px', marginBottom: 20, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
+                  <span style={{ fontWeight: 700, fontSize: 17 }}>סה״כ</span>
+                  <span style={{ fontWeight: 900, fontSize: 22, color: '#1e1e2e' }}>{total} ₪</span>
+                </div>
+
+                <button onClick={() => setStep('auth')} style={{ width: '100%', padding: 15, background: '#c15f2a', color: '#fff', border: 'none', borderRadius: 12, fontWeight: 800, fontSize: '1.05rem', cursor: 'pointer', fontFamily: 'inherit' }}>
+                  המשך להזמנה →
+                </button>
+                <button onClick={() => navigate('/')} style={{ width: '100%', marginTop: 10, padding: 12, background: 'transparent', color: '#888', border: 'none', cursor: 'pointer', fontSize: '0.9rem', fontFamily: 'inherit' }}>
+                  ← המשך בקנייה
+                </button>
+              </>
+            )}
+          </>
+        )}
+
+        {/* ── Step: Auth choice ── */}
+        {step === 'auth' && (
+          <div>
+            <button onClick={() => setStep('cart')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#c15f2a', marginBottom: 28, padding: 0, fontWeight: 600, fontSize: '0.95rem', fontFamily: 'inherit' }}>
+              ← חזור לסל
+            </button>
+            <div style={{ textAlign: 'center', marginBottom: 36 }}>
+              <div style={{ fontSize: 52, marginBottom: 12 }}>🔐</div>
+              <h2 style={{ margin: '0 0 8px', fontSize: 22, fontWeight: 900 }}>כניסה לחשבון</h2>
+              <p style={{ margin: 0, color: '#888', fontSize: 14 }}>התחבר כדי לעקוב אחר ההזמנות שלך</p>
+            </div>
+            <button onClick={() => setStep('authForm')} style={{ width: '100%', padding: 14, background: '#1e1e2e', color: '#fff', border: 'none', borderRadius: 12, fontWeight: 700, fontSize: '1rem', cursor: 'pointer', fontFamily: 'inherit', marginBottom: 12 }}>
+              התחברות / הרשמה
+            </button>
+            <button onClick={() => { setForm({ customer: '', phone: '', address: '', email: '' }); setStep('details'); }} style={{ width: '100%', padding: 14, background: '#fff', color: '#555', border: '1.5px solid #ddd', borderRadius: 12, fontWeight: 600, fontSize: '1rem', cursor: 'pointer', fontFamily: 'inherit' }}>
+              המשך כאורח
+            </button>
+          </div>
+        )}
+
+        {/* ── Step: Auth form ── */}
+        {step === 'authForm' && (
+          <div>
+            <button onClick={() => setStep('auth')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#c15f2a', marginBottom: 24, padding: 0, fontWeight: 600, fontSize: '0.95rem', fontFamily: 'inherit' }}>
+              ← חזרה
+            </button>
+            <div style={{ display: 'flex', marginBottom: 24, borderRadius: 12, overflow: 'hidden', border: '1.5px solid #e0d8cc' }}>
+              {(['login', 'register'] as const).map(m => (
+                <button key={m} onClick={() => setAuthMode(m)} style={{ flex: 1, padding: '11px 0', border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: '0.95rem', fontFamily: 'inherit', background: authMode === m ? '#1e1e2e' : '#fff', color: authMode === m ? '#fff' : '#888' }}>
+                  {m === 'login' ? 'התחברות' : 'הרשמה'}
+                </button>
+              ))}
+            </div>
+            {authMode === 'register' && [
+              { label: 'שם מלא *', key: 'name', type: 'text', placeholder: 'ישראל ישראלי' },
+              { label: 'טלפון *', key: 'phone', type: 'tel', placeholder: '050-0000000' },
+              { label: 'כתובת', key: 'address', type: 'text', placeholder: 'רחוב הרצל 1' },
+            ].map(f => (
+              <div key={f.key} style={{ marginBottom: 14 }}>
+                <label style={{ display: 'block', marginBottom: 5, fontWeight: 600, fontSize: '0.9rem' }}>{f.label}</label>
+                <input type={f.type} value={authForm[f.key as keyof typeof authForm]} onChange={e => setAuthForm(p => ({ ...p, [f.key]: e.target.value }))} placeholder={f.placeholder} style={inputStyle} />
+              </div>
+            ))}
+            {[
+              { label: 'אימייל *', key: 'email', type: 'email', placeholder: 'you@example.com' },
+              { label: 'סיסמה *', key: 'password', type: 'password', placeholder: '••••••••' },
+            ].map(f => (
+              <div key={f.key} style={{ marginBottom: 14 }}>
+                <label style={{ display: 'block', marginBottom: 5, fontWeight: 600, fontSize: '0.9rem' }}>{f.label}</label>
+                <input type={f.type} value={authForm[f.key as keyof typeof authForm]} onChange={e => setAuthForm(p => ({ ...p, [f.key]: e.target.value }))} placeholder={f.placeholder} style={inputStyle} />
+              </div>
+            ))}
+            {authError && <div style={{ color: '#721c24', background: '#fff3f3', border: '1px solid #f5c6cb', borderRadius: 8, padding: '10px 14px', marginBottom: 14, fontSize: '0.9rem' }}>{authError}</div>}
+            <button onClick={handleAuth} disabled={authLoading} style={{ width: '100%', padding: 14, background: authLoading ? '#aaa' : '#c15f2a', color: '#fff', border: 'none', borderRadius: 12, fontWeight: 700, fontSize: '1rem', cursor: 'pointer', fontFamily: 'inherit', marginTop: 4 }}>
+              {authLoading ? '...' : authMode === 'login' ? 'התחבר →' : 'הרשמה →'}
+            </button>
+          </div>
+        )}
+
+        {/* ── Step: Details ── */}
+        {step === 'details' && (
+          <div>
+            <button onClick={() => setStep(user ? 'cart' : 'auth')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#c15f2a', marginBottom: 24, padding: 0, fontWeight: 600, fontSize: '0.95rem', fontFamily: 'inherit' }}>
+              ← חזרה
+            </button>
+            {user && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24, padding: '12px 16px', background: '#f0faf2', borderRadius: 12, border: '1px solid #d1fae5' }}>
+                <span style={{ fontSize: 24 }}>👤</span>
+                <div>
+                  <div style={{ fontWeight: 700, fontSize: 14 }}>{user.name}</div>
+                  <div style={{ fontSize: 12, color: '#888' }}>{user.email}</div>
+                </div>
+              </div>
+            )}
+            <h2 style={{ fontSize: 20, fontWeight: 900, marginBottom: 20 }}>פרטי הזמנה</h2>
+            {[
+              { label: 'שם מלא *', key: 'customer', placeholder: 'ישראל ישראלי', type: 'text' },
+              { label: 'טלפון *', key: 'phone', placeholder: '050-0000000', type: 'tel' },
+              { label: 'כתובת', key: 'address', placeholder: 'רחוב הרצל 1, תל אביב', type: 'text' },
+              { label: 'אימייל', key: 'email', placeholder: 'email@example.com', type: 'email' },
+            ].map(f => (
+              <div key={f.key} style={{ marginBottom: 16 }}>
+                <label style={{ display: 'block', marginBottom: 5, fontWeight: 600, fontSize: '0.9rem' }}>{f.label}</label>
+                <input type={f.type} value={form[f.key as keyof typeof form]} onChange={e => setForm(p => ({ ...p, [f.key]: e.target.value }))} placeholder={f.placeholder} style={inputStyle} />
+              </div>
+            ))}
+
+            {/* Order summary */}
+            <div style={{ background: '#fff', borderRadius: 14, padding: '14px 16px', marginBottom: 20, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
+              <div style={{ fontSize: 13, color: '#888', marginBottom: 10, fontWeight: 600 }}>סיכום הזמנה</div>
+              {items.map(i => (
+                <div key={i.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginBottom: 6, color: '#444' }}>
+                  <span>{i.name} × {i.quantity}</span>
+                  <span>{i.price * i.quantity} ₪</span>
+                </div>
+              ))}
+              <div style={{ borderTop: '1px solid #f0f0f0', marginTop: 10, paddingTop: 10, display: 'flex', justifyContent: 'space-between', fontWeight: 800, fontSize: 16 }}>
+                <span>סה״כ</span><span>{total} ₪</span>
+              </div>
+            </div>
+
+            {error && <div style={{ color: '#721c24', background: '#fff3f3', border: '1px solid #f5c6cb', borderRadius: 8, padding: '10px 14px', marginBottom: 16, fontSize: '0.9rem' }}>{error}</div>}
+            <button onClick={handleOrder} disabled={submitting} style={{ width: '100%', padding: 15, background: submitting ? '#aaa' : '#28a745', color: '#fff', border: 'none', borderRadius: 12, fontWeight: 800, fontSize: '1.05rem', cursor: submitting ? 'default' : 'pointer', fontFamily: 'inherit' }}>
+              {submitting ? '...' : 'שלח הזמנה ✓'}
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+const qtyBtn: React.CSSProperties = {
+  width: 30, height: 30, borderRadius: '50%', border: '1.5px solid #e0d8cc',
+  background: '#f5f5f5', cursor: 'pointer', fontWeight: 'bold', fontSize: 16,
+  display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+};

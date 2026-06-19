@@ -26,7 +26,6 @@ export default function Header({
   const [cartOpenInternal, setCartOpenInternal] = useState(false);
   const cartOpen = cartOpenProp !== undefined ? cartOpenProp : cartOpenInternal;
   const setCartOpen = (v: boolean) => { setCartOpenInternal(v); onCartOpenChange?.(v); };
-  const cartFromOrderNow = cartOpenProp === true && cartOpenInternal === false;
   const [authOpen, setAuthOpen] = useState(false);
 
   return (
@@ -86,7 +85,7 @@ export default function Header({
         <p className="hero__subtitle">{strings.subtitle}</p>
       </header>
 
-      {cartOpen && <CartDrawer onClose={() => setCartOpen(false)} initialCheckout={cartFromOrderNow} />}
+      {cartOpen && <CartDrawer onClose={() => setCartOpen(false)} />}
       {authOpen && <AuthModal onClose={() => setAuthOpen(false)} />}
     </>
   );

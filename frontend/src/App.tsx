@@ -9,6 +9,7 @@ import AdminAnalytics from './pages/AdminAnalytics';
 import AdminCustomers from './pages/AdminCustomers';
 import RequireAdmin from './components/RequireAdmin';
 import InstallPrompt from './components/InstallPrompt';
+import Checkout from './pages/Checkout';
 import OrderHistory from './pages/OrderHistory';
 import OrderTrack from './pages/OrderTrack';
 
@@ -27,6 +28,7 @@ export default function App() {
       <Route path="/admin/categories" element={<RequireAdmin><CategoryEditor /></RequireAdmin>} />
       <Route path="/admin/analytics" element={<RequireAdmin><AdminAnalytics /></RequireAdmin>} />
       <Route path="/admin/customers" element={<RequireAdmin><AdminCustomers /></RequireAdmin>} />
+      <Route path="/checkout" element={<Checkout />} />
       <Route path="/orders" element={<OrderHistory />} />
       <Route path="/track" element={<OrderTrack />} />
       <Route path="*" element={<Navigate to="/" replace />} />
