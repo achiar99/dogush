@@ -59,29 +59,7 @@ export default function Checkout() {
   };
 
   const handleOrder = async () => {
-    if (!form.customer.trim()) { setError('שם חובה'); return; }
-    if (!form.phone.trim()) { setError('טלפון חובה'); return; }
-    setSubmitting(true); setError(null);
-    try {
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-      if (token) headers['Authorization'] = `Bearer ${token}`;
-      const res = await fetch(`${API}/api/orders`, {
-        method: 'POST', headers,
-        body: JSON.stringify({
-          customer: form.customer, phone: form.phone,
-          address: form.address, email: form.email,
-          items: items.map(i => ({ id: i.id, quantity: i.quantity })), total,
-        }),
-      });
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        if (body.error === 'out_of_stock') throw new Error('מוצר אחד או יותר אזל מהמלאי. רענן את הדף ונסה שנית.');
-        throw new Error('שגיאה בשליחת הזמנה');
-      }
-      clear();
-      setDone(true);
-    } catch (e: any) { setError(e.message ?? 'שגיאה'); }
-    finally { setSubmitting(false); }
+    setDone(true);
   };
 
   if (done) {
@@ -89,10 +67,18 @@ export default function Checkout() {
       <div className="page">
         <Header showCart={false} />
         <div style={{ maxWidth: 480, margin: '60px auto', padding: '0 20px', textAlign: 'center', direction: 'rtl' }}>
-          <div style={{ fontSize: 72, marginBottom: 20 }}>✅</div>
-          <h2 style={{ fontSize: 24, fontWeight: 900, marginBottom: 10 }}>ההזמנה התקבלה!</h2>
-          <p style={{ color: '#666', marginBottom: 32 }}>תודה, ניצור קשר בקרוב.</p>
-          <button onClick={() => navigate('/')} style={{ padding: '12px 32px', background: '#c15f2a', color: '#fff', border: 'none', borderRadius: 12, fontWeight: 700, fontSize: '1rem', cursor: 'pointer', fontFamily: 'inherit' }}>
+          <div style={{ fontSize: 72, marginBottom: 20 }}>🚧</div>
+          <h2 style={{ fontSize: 22, fontWeight: 900, marginBottom: 12 }}>כרגע לא ניתן לעשות הזמנות</h2>
+          <p style={{ color: '#555', fontSize: 16, marginBottom: 8 }}>אנא ליצור קשר במספר:</p>
+          <a href="tel:0524841017" style={{ display: 'inline-block', fontSize: 22, fontWeight: 900, color: '#c15f2a', textDecoration: 'none', marginBottom: 24, letterSpacing: 1 }}>
+            052-484-1017
+          </a>
+          <br />
+          <a href="https://wa.me/972524841017" target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '12px 28px', background: '#25d366', color: '#fff', borderRadius: 12, fontWeight: 700, fontSize: '1rem', textDecoration: 'none', marginBottom: 16 }}>
+            <span>📱</span> שלח וואטסאפ
+          </a>
+          <br />
+          <button onClick={() => navigate('/')} style={{ padding: '10px 28px', background: 'transparent', color: '#888', border: 'none', cursor: 'pointer', fontSize: '0.95rem', fontFamily: 'inherit' }}>
             חזור לחנות
           </button>
         </div>

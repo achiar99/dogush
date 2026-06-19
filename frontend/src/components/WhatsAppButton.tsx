@@ -1,7 +1,24 @@
+import { useEffect, useState } from 'react';
+
 const WA_PHONE = import.meta.env.VITE_WHATSAPP_PHONE || '972524841017';
 const WA_MESSAGE = encodeURIComponent('שלום, יש לי שאלה לגבי הזמנה 🐾');
 
 export default function WhatsAppButton() {
+  const [installVisible, setInstallVisible] = useState(false);
+
+  useEffect(() => {
+    const check = () => {
+      const dismissed = !!localStorage.getItem('pwa-dismissed');
+      const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
+      const isStandalone = (window.navigator as any).standalone === true;
+      setInstallVisible(!dismissed && isIos && !isStandalone);
+    };
+    check();
+    window.addEventListener('beforeinstallprompt', () => setInstallVisible(v => v || !localStorage.getItem('pwa-dismissed')));
+    window.addEventListener('storage', check);
+    return () => window.removeEventListener('storage', check);
+  }, []);
+
   return (
     <a
       href={`https://wa.me/${WA_PHONE}?text=${WA_MESSAGE}`}
@@ -10,9 +27,10 @@ export default function WhatsAppButton() {
       title="שאלות? כתוב לנו בוואטסאפ"
       style={{
         position: 'fixed',
-        bottom: 24,
+        bottom: installVisible ? 120 : 24,
         left: 24,
         zIndex: 999,
+        transition: 'bottom 0.3s ease',
         width: 56,
         height: 56,
         borderRadius: '50%',
