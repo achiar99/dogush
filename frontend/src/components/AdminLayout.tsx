@@ -27,6 +27,8 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
 
+  document.title = 'Dogush Admin';
+
   const handleLogout = () => {
     localStorage.removeItem('adminToken');
     navigate('/admin');
