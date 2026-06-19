@@ -1,8 +1,42 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+    VitePWA({
+      registerType: 'autoUpdate',
+      includeAssets: ['images/logo.jpg'],
+      manifest: {
+        name: 'Dogush',
+        short_name: 'Dogush',
+        description: 'החנות שלך בגוש',
+        theme_color: '#1e1e2e',
+        background_color: '#fbf7ee',
+        display: 'standalone',
+        orientation: 'portrait',
+        start_url: '/',
+        icons: [
+          { src: '/images/logo-192.png', sizes: '192x192', type: 'image/png' },
+          { src: '/images/logo-512.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' },
+        ],
+      },
+      workbox: {
+        globPatterns: ['**/*.{js,css,html,ico,png,jpg,svg}'],
+        runtimeCaching: [
+          {
+            urlPattern: /^https:\/\/.*\.execute-api\..*\.amazonaws\.com\/api\/(products|categories)/,
+            handler: 'StaleWhileRevalidate',
+            options: {
+              cacheName: 'api-products',
+              expiration: { maxAgeSeconds: 60 * 60 },
+            },
+          },
+        ],
+      },
+    }),
+  ],
   server: {
     port: 5174,
     // Allow Vite requests coming from your ngrok URL (used for sharing the dev server).

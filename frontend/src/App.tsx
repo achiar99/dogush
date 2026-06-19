@@ -8,11 +8,14 @@ import CategoryEditor from './pages/CategoryEditor';
 import AdminAnalytics from './pages/AdminAnalytics';
 import AdminCustomers from './pages/AdminCustomers';
 import RequireAdmin from './components/RequireAdmin';
+import InstallPrompt from './components/InstallPrompt';
 import OrderHistory from './pages/OrderHistory';
 import OrderTrack from './pages/OrderTrack';
 
 export default function App() {
   return (
+    <>
+    <InstallPrompt />
     <Routes>
       <Route path="/" element={<Menu />} />
       <Route path="/menu" element={<Menu />} />
@@ -28,6 +31,7 @@ export default function App() {
       <Route path="/track" element={<OrderTrack />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
+    </>
   );
 }
 
