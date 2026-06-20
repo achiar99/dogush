@@ -57,9 +57,32 @@ async function notifyNewOrder(order: { orderId: string; customer: string; total:
 
 export const app = express();
 
+const ALLOWED_ORIGINS = [
+  'https://dogush.co.il',
+  'https://www.dogush.co.il',
+  'https://dev.dogush.co.il',
+  'http://localhost:5173',
+  'http://localhost:5174',
+];
+
 app.use(helmet());
-app.use(cors());
-app.use(express.json());
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin || ALLOWED_ORIGINS.includes(origin)) callback(null, true);
+    else callback(new Error('Not allowed by CORS'));
+  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+}));
+app.use(express.json({ limit: '100kb' }));
+
+// ─── Input validation helpers ─────────────────────────────────────────────────
+const EMAIL_RE = /^[^\s@]{1,64}@[^\s@]{1,255}\.[^\s@]{2,}$/;
+const isValidEmail = (v: unknown) => typeof v === 'string' && EMAIL_RE.test(v) && v.length <= 254;
+const isValidPassword = (v: unknown) => typeof v === 'string' && v.length >= 6 && v.length <= 128;
+const isValidStr = (v: unknown, max = 200) => typeof v === 'string' && v.trim().length > 0 && v.length <= max;
+const isValidPhone = (v: unknown) => !v || (typeof v === 'string' && v.length <= 20);
+const isValidPrice = (v: unknown) => typeof v === 'number' && v >= 0 && v <= 100000 && Number.isFinite(v);
 
 // ─── Rate limiter for auth routes (max 10 attempts per IP per 15 min) ─────────
 const authAttempts = new Map<string, { count: number; resetAt: number }>();
@@ -207,10 +230,11 @@ app.get('/api/foods', async (_req, res) => {
 app.post('/api/orders', async (req, res) => {
   try {
     const { customer, address, email, items, total } = req.body;
-    if (!customer || !items?.length) {
-      res.status(400).json({ error: 'customer and items are required' });
-      return;
-    }
+    if (!isValidStr(customer, 100)) { res.status(400).json({ error: 'שם לקוח לא תקין' }); return; }
+    if (!Array.isArray(items) || items.length === 0 || items.length > 100) { res.status(400).json({ error: 'פריטים לא תקינים' }); return; }
+    if (!isValidPrice(total)) { res.status(400).json({ error: 'סכום לא תקין' }); return; }
+    if (email && !isValidEmail(email)) { res.status(400).json({ error: 'אימייל לא תקין' }); return; }
+    if (address && !isValidStr(address, 200)) { res.status(400).json({ error: 'כתובת לא תקינה' }); return; }
     const userClaim = getRequestUser(req);
     const order = await createOrder({ customer, address, email, items, total, ...(userClaim ? { userId: userClaim.userId } : {}) });
     notifyNewOrder(order);
@@ -229,10 +253,10 @@ app.post('/api/orders', async (req, res) => {
 app.post('/api/auth/register', authRateLimit, async (req, res) => {
   try {
     const { email, password, name, phone, address } = req.body;
-    if (!email || !password || !name) {
-      res.status(400).json({ error: 'email, password and name are required' });
-      return;
-    }
+    if (!isValidEmail(email)) { res.status(400).json({ error: 'אימייל לא תקין' }); return; }
+    if (!isValidPassword(password)) { res.status(400).json({ error: 'סיסמה חייבת להיות 6-128 תווים' }); return; }
+    if (!isValidStr(name, 100)) { res.status(400).json({ error: 'שם לא תקין' }); return; }
+    if (!isValidPhone(phone)) { res.status(400).json({ error: 'מספר טלפון לא תקין' }); return; }
     const existing = await getUserByEmail(email.toLowerCase());
     if (existing) { res.status(409).json({ error: 'כתובת האימייל כבר בשימוש' }); return; }
     const passwordHash = await bcrypt.hash(password, 10);
@@ -277,7 +301,7 @@ app.post('/api/auth/google', async (req, res) => {
 app.post('/api/auth/login', authRateLimit, async (req, res) => {
   try {
     const { email, password } = req.body;
-    if (!email || !password) { res.status(400).json({ error: 'email and password required' }); return; }
+    if (!isValidEmail(email) || !isValidPassword(password)) { res.status(400).json({ error: 'אימייל או סיסמה לא תקינים' }); return; }
     const user = await getUserByEmail(email.toLowerCase());
     if (!user) { res.status(401).json({ error: 'אימייל או סיסמה שגויים' }); return; }
     const valid = await bcrypt.compare(password, user.passwordHash);
@@ -303,6 +327,9 @@ app.get('/api/auth/me', requireUser, async (req, res) => {
 app.put('/api/auth/me', requireUser, async (req, res) => {
   try {
     const { name, phone, address } = req.body;
+    if (!isValidStr(name, 100)) { res.status(400).json({ error: 'שם לא תקין' }); return; }
+    if (!isValidPhone(phone)) { res.status(400).json({ error: 'מספר טלפון לא תקין' }); return; }
+    if (address && !isValidStr(address, 200)) { res.status(400).json({ error: 'כתובת לא תקינה' }); return; }
     const updated = await updateUser((req as any).userId, { name, phone, address });
     res.json({ userId: updated.userId, email: updated.email, name: updated.name, phone: updated.phone, address: updated.address });
   } catch (error) {
