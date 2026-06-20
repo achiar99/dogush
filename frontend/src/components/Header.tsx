@@ -27,11 +27,33 @@ export default function Header({
   const cartOpen = cartOpenProp !== undefined ? cartOpenProp : cartOpenInternal;
   const setCartOpen = (v: boolean) => { setCartOpenInternal(v); onCartOpenChange?.(v); };
   const [authOpen, setAuthOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  const navItems = [
+    { label: '📦 מעקב הזמנה', onClick: () => { navigate('/track'); setMenuOpen(false); } },
+    ...(user ? [
+      { label: '🧾 ההזמנות שלי', onClick: () => { navigate('/orders'); setMenuOpen(false); } },
+      { label: '👤 הפרופיל שלי', onClick: () => { navigate('/profile'); setMenuOpen(false); } },
+      { label: '🚪 התנתק', onClick: () => { logout(); setMenuOpen(false); } },
+    ] : [
+      { label: '👤 התחבר / הרשם', onClick: () => { setAuthOpen(true); setMenuOpen(false); } },
+    ]),
+  ];
 
   return (
     <>
+      <style>{`
+        @media (max-width: 600px) {
+          .header-nav-desktop { display: none !important; }
+          .header-hamburger { display: flex !important; }
+        }
+        @media (min-width: 601px) {
+          .header-nav-desktop { display: flex !important; }
+          .header-hamburger { display: none !important; }
+        }
+      `}</style>
+
       <header className="hero">
-        {/* Top bar: cart left, nav right */}
         {showCart && (
           <div style={{
             display: 'flex', justifyContent: 'space-between', alignItems: 'center',
@@ -56,19 +78,48 @@ export default function Header({
               )}
             </button>
 
-            {/* Nav buttons - right */}
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-              <button onClick={() => navigate('/track')} style={ghostBtn}>📦 מעקב הזמנה</button>
-              {user ? (
-                <>
-                  <button onClick={() => navigate('/orders')} style={ghostBtn}>ההזמנות שלי</button>
-                  <button onClick={() => navigate('/profile')} style={ghostBtn}>הפרופיל שלי</button>
-                  <button onClick={logout} style={ghostBtn}>התנתק</button>
-                </>
-              ) : (
-                <button onClick={() => setAuthOpen(true)} style={ghostBtn}>👤 התחבר / הרשם</button>
-              )}
+            {/* Desktop nav */}
+            <div className="header-nav-desktop" style={{ gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+              {navItems.map(item => (
+                <button key={item.label} onClick={item.onClick} style={ghostBtn}>{item.label}</button>
+              ))}
             </div>
+
+            {/* Hamburger button - mobile */}
+            <button
+              className="header-hamburger"
+              onClick={() => setMenuOpen(v => !v)}
+              aria-label="תפריט"
+              style={{ ...cartBtn, display: 'none', flexDirection: 'column', gap: 5, padding: '10px 14px', alignItems: 'center', justifyContent: 'center' }}
+            >
+              <span style={{ display: 'block', width: 22, height: 2, background: '#1e1e2e', borderRadius: 2, transition: 'transform 0.2s', transform: menuOpen ? 'rotate(45deg) translate(3px, 3px)' : 'none' }} />
+              <span style={{ display: 'block', width: 22, height: 2, background: '#1e1e2e', borderRadius: 2, opacity: menuOpen ? 0 : 1, transition: 'opacity 0.2s' }} />
+              <span style={{ display: 'block', width: 22, height: 2, background: '#1e1e2e', borderRadius: 2, transition: 'transform 0.2s', transform: menuOpen ? 'rotate(-45deg) translate(3px, -3px)' : 'none' }} />
+            </button>
+          </div>
+        )}
+
+        {/* Mobile dropdown menu */}
+        {showCart && menuOpen && (
+          <div style={{
+            position: 'absolute', top: 70, right: 16, left: 16,
+            backgroundColor: '#fff', borderRadius: 12, boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
+            zIndex: 100, overflow: 'hidden', direction: 'rtl',
+          }}>
+            {navItems.map((item, i) => (
+              <button
+                key={item.label}
+                onClick={item.onClick}
+                style={{
+                  width: '100%', padding: '14px 20px', background: 'none', border: 'none',
+                  borderBottom: i < navItems.length - 1 ? '1px solid #f0f0f0' : 'none',
+                  textAlign: 'right', fontSize: '1rem', fontWeight: 600, cursor: 'pointer',
+                  color: '#1e1e2e', fontFamily: 'inherit',
+                }}
+              >
+                {item.label}
+              </button>
+            ))}
           </div>
         )}
 
