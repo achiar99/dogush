@@ -7,6 +7,10 @@ resource "aws_dynamodb_table" "admins" {
     name = "username"
     type = "S"
   }
+
+  point_in_time_recovery {
+    enabled = true
+  }
 }
 
 resource "aws_dynamodb_table" "products" {
@@ -28,6 +32,10 @@ resource "aws_dynamodb_table" "products" {
     name            = "byCategory"
     hash_key        = "category"
     projection_type = "ALL"
+  }
+
+  point_in_time_recovery {
+    enabled = true
   }
 }
 
@@ -69,6 +77,10 @@ resource "aws_dynamodb_table" "orders" {
     range_key       = "createdAt"
     projection_type = "ALL"
   }
+
+  point_in_time_recovery {
+    enabled = true
+  }
 }
 
 resource "aws_dynamodb_table" "counters" {
@@ -80,6 +92,10 @@ resource "aws_dynamodb_table" "counters" {
     name = "name"
     type = "S"
   }
+
+  point_in_time_recovery {
+    enabled = true
+  }
 }
 
 resource "aws_dynamodb_table" "categories" {
@@ -90,6 +106,10 @@ resource "aws_dynamodb_table" "categories" {
   attribute {
     name = "key"
     type = "S"
+  }
+
+  point_in_time_recovery {
+    enabled = true
   }
 }
 
@@ -129,6 +149,10 @@ resource "aws_dynamodb_table" "page_views" {
     attribute_name = "ttl"
     enabled        = true
   }
+
+  point_in_time_recovery {
+    enabled = true
+  }
 }
 
 resource "aws_dynamodb_table" "users" {
@@ -150,5 +174,9 @@ resource "aws_dynamodb_table" "users" {
     name            = "byEmail"
     hash_key        = "email"
     projection_type = "ALL"
+  }
+
+  point_in_time_recovery {
+    enabled = true
   }
 }
