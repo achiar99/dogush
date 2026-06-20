@@ -12,6 +12,7 @@ import InstallPrompt from './components/InstallPrompt';
 import Checkout from './pages/Checkout';
 import OrderHistory from './pages/OrderHistory';
 import OrderTrack from './pages/OrderTrack';
+import Profile from './pages/Profile';
 
 export default function App() {
   return (
@@ -30,6 +31,7 @@ export default function App() {
       <Route path="/admin/customers" element={<RequireAdmin><AdminCustomers /></RequireAdmin>} />
       <Route path="/checkout" element={<Checkout />} />
       <Route path="/orders" element={<OrderHistory />} />
+      <Route path="/profile" element={<Profile />} />
       <Route path="/track" element={<OrderTrack />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

@@ -62,6 +62,7 @@ export default function Header({
               {user ? (
                 <>
                   <button onClick={() => navigate('/orders')} style={ghostBtn}>ההזמנות שלי</button>
+                  <button onClick={() => navigate('/profile')} style={ghostBtn}>הפרופיל שלי</button>
                   <button onClick={logout} style={ghostBtn}>התנתק</button>
                 </>
               ) : (
