@@ -4,6 +4,24 @@ import { useCart } from '../context/CartContext';
 import { useUser } from '../context/UserContext';
 import Header from '../components/Header';
 
+declare global {
+  interface Window {
+    google?: {
+      accounts: {
+        oauth2: {
+          initTokenClient: (config: {
+            client_id: string;
+            scope: string;
+            callback: (response: { access_token?: string; error?: string }) => void;
+          }) => { requestAccessToken: () => void };
+        };
+      };
+    };
+  }
+}
+
+const GOOGLE_CLIENT_ID = '463119481219-u3u4o1ciif29aeus545hiibs7fhd98dt.apps.googleusercontent.com';
+
 const API = import.meta.env.VITE_API_BASE_URL || '';
 
 type Step = 'cart' | 'auth' | 'authForm' | 'details';
@@ -34,6 +52,36 @@ export default function Checkout() {
   const [authForm, setAuthForm] = useState({ email: '', password: '', name: '', phone: '', address: '' });
   const [authLoading, setAuthLoading] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
+  const handleGoogleLogin = () => {
+    if (!window.google?.accounts?.oauth2) { setAuthError('Google Sign-In לא זמין'); return; }
+    setAuthError(null);
+    setAuthLoading(true);
+    const client = window.google.accounts.oauth2.initTokenClient({
+      client_id: GOOGLE_CLIENT_ID,
+      scope: 'email profile openid',
+      callback: async (response: { access_token?: string; error?: string }) => {
+        if (response.error || !response.access_token) { setAuthError('שגיאת Google'); setAuthLoading(false); return; }
+        try {
+          const userInfoRes = await fetch('https://openidconnect.googleapis.com/v1/userinfo', {
+            headers: { Authorization: `Bearer ${response.access_token}` },
+          });
+          const userInfo = await userInfoRes.json();
+          const res = await fetch(`${API}/api/auth/google`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ accessToken: response.access_token, email: userInfo.email, name: userInfo.name }),
+          });
+          const data = await res.json();
+          if (!res.ok) { setAuthError(data.error || 'שגיאה'); return; }
+          login(data.token, data.user);
+          setForm({ customer: data.user.name || '', phone: data.user.phone || '', address: data.user.address || '', email: data.user.email || '' });
+          setStep('details');
+        } catch { setAuthError('שגיאת חיבור'); }
+        finally { setAuthLoading(false); }
+      },
+    });
+    client.requestAccessToken();
+  };
 
   const handleAuth = async () => {
     setAuthError(null);
@@ -155,8 +203,12 @@ export default function Checkout() {
               <h2 style={{ margin: '0 0 8px', fontSize: 22, fontWeight: 900 }}>כניסה לחשבון</h2>
               <p style={{ margin: 0, color: '#888', fontSize: 14 }}>התחבר כדי לעקוב אחר ההזמנות שלך</p>
             </div>
+            <button onClick={handleGoogleLogin} disabled={authLoading} style={{ width: '100%', padding: '11px 16px', marginBottom: 12, border: '1.5px solid #dadce0', borderRadius: 10, background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, cursor: authLoading ? 'default' : 'pointer', fontSize: '0.95rem', fontWeight: 600, fontFamily: 'inherit', color: '#3c4043' }}>
+              <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+              המשך עם Google
+            </button>
             <button onClick={() => setStep('authForm')} style={{ width: '100%', padding: 14, background: '#1e1e2e', color: '#fff', border: 'none', borderRadius: 12, fontWeight: 700, fontSize: '1rem', cursor: 'pointer', fontFamily: 'inherit', marginBottom: 12 }}>
-              התחברות / הרשמה
+              התחברות / הרשמה עם אימייל
             </button>
             <button onClick={() => { setForm({ customer: '', phone: '', address: '', email: '' }); setStep('details'); }} style={{ width: '100%', padding: 14, background: '#fff', color: '#555', border: '1.5px solid #ddd', borderRadius: 12, fontWeight: 600, fontSize: '1rem', cursor: 'pointer', fontFamily: 'inherit' }}>
               המשך כאורח

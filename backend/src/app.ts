@@ -3,6 +3,7 @@ import cors from 'cors';
 import express from 'express';
 import helmet from 'helmet';
 import jwt from 'jsonwebtoken';
+import { OAuth2Client } from 'google-auth-library';
 import adminAuth from './adminAuth';
 import {
   listProducts,
@@ -35,6 +36,8 @@ import { SNSClient, PublishCommand } from '@aws-sdk/client-sns';
 import heConfig from '../../shared/he.json';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '463119481219-u3u4o1ciif29aeus545hiibs7fhd98dt.apps.googleusercontent.com';
+const googleClient = new OAuth2Client(GOOGLE_CLIENT_ID);
 
 const snsClient = new SNSClient({ region: process.env.AWS_REGION || 'eu-north-1' });
 
@@ -219,6 +222,35 @@ app.post('/api/auth/register', async (req, res) => {
   } catch (error) {
     console.error('Register error:', error);
     res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.post('/api/auth/google', async (req, res) => {
+  try {
+    const { accessToken, email: emailFromClient, name: nameFromClient } = req.body;
+    if (!accessToken) { res.status(400).json({ error: 'accessToken required' }); return; }
+    // Verify access token with Google
+    const tokenInfoRes = await fetch(`https://www.googleapis.com/oauth2/v3/tokeninfo?access_token=${accessToken}`);
+    const tokenInfo = await tokenInfoRes.json() as { error?: string; email?: string };
+    if (tokenInfo.error || !tokenInfo.email) {
+      res.status(401).json({ error: 'Invalid Google token' }); return;
+    }
+    const email = tokenInfo.email.toLowerCase();
+    let user = await getUserByEmail(email);
+    if (!user) {
+      user = await createUser({
+        email,
+        passwordHash: '',
+        name: nameFromClient || emailFromClient?.split('@')[0] || email.split('@')[0],
+        phone: '',
+        address: '',
+      });
+    }
+    const token = jwt.sign({ userId: user.userId }, JWT_SECRET, { expiresIn: '30d' });
+    res.json({ token, user: { userId: user.userId, email: user.email, name: user.name, phone: user.phone, address: user.address } });
+  } catch (error) {
+    console.error('Google auth error:', error);
+    res.status(401).json({ error: 'Google authentication failed' });
   }
 });
 

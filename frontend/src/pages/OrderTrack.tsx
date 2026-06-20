@@ -49,7 +49,7 @@ export default function OrderTrack() {
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#faf9f6', direction: 'rtl' }}>
-      <Header showCart={false} />
+      <Header />
       <div style={{ maxWidth: 520, margin: '0 auto', padding: '40px 16px' }}>
         <h1 style={{ marginBottom: 8 }}>מעקב הזמנה</h1>
         <p style={{ color: '#666', marginBottom: 28 }}>הכנס מספר הזמנה כדי לראות את הסטטוס</p>

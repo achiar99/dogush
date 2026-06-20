@@ -34,7 +34,7 @@ export default function OrderHistory() {
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#faf9f6', direction: 'rtl' }}>
-      <Header showCart={false} />
+      <Header />
       <div style={{ maxWidth: 700, margin: '0 auto', padding: '32px 16px' }}>
         <h1 style={{ marginBottom: 8 }}>ההזמנות שלי</h1>
         {user && <p style={{ color: '#666', marginBottom: 24 }}>שלום, {user.name}</p>}
