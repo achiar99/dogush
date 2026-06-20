@@ -59,7 +59,7 @@ export default function AdminAnalytics() {
     return new Date(v.timestamp) >= cutoff;
   });
 
-  const uniqueSessions = new Set(filtered.map(v => v.sessionId)).size;
+  const uniqueSessions = new Set(filtered.map(v => v.ip)).size;
   const bySource = count(filtered.map(v => v.source || 'direct'));
   const byCountry = count(filtered.map(v => v.country || 'Unknown'));
   const byCity = count(filtered.map(v => v.city || 'Unknown'));

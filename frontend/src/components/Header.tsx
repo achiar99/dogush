@@ -41,7 +41,7 @@ export default function Header({
             <button
               onClick={() => setCartOpen(true)}
               aria-label="סל קניות"
-              style={{ ...ghostBtn, display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.95rem' }}
+              style={{ ...cartBtn, display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.95rem' }}
             >
               <span style={{ fontSize: 20 }}>🛒</span>
               {count > 0 && (
@@ -92,8 +92,15 @@ export default function Header({
 }
 
 const ghostBtn: React.CSSProperties = {
-  background: 'rgba(255,255,255,0.18)', border: '1.5px solid rgba(255,255,255,0.55)',
-  borderRadius: 10, padding: '7px 12px', cursor: 'pointer', color: '#fff',
-  fontWeight: 600, fontSize: '0.85rem', backdropFilter: 'blur(6px)',
-  whiteSpace: 'nowrap', fontFamily: 'inherit',
+  background: '#fff', border: 'none',
+  borderRadius: 999, padding: '8px 16px', cursor: 'pointer', color: '#1e1e2e',
+  fontWeight: 600, fontSize: '0.88rem',
+  whiteSpace: 'nowrap', fontFamily: 'inherit', boxShadow: '0 2px 12px rgba(0,0,0,0.18)',
+};
+
+const cartBtn: React.CSSProperties = {
+  background: '#fff', border: 'none',
+  borderRadius: 999, padding: '8px 16px', cursor: 'pointer', color: '#1e1e2e',
+  fontWeight: 700, fontSize: '0.95rem',
+  whiteSpace: 'nowrap', fontFamily: 'inherit', boxShadow: '0 2px 12px rgba(0,0,0,0.2)',
 };
