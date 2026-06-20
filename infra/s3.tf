@@ -28,6 +28,13 @@ resource "aws_s3_bucket_policy" "images_public_read" {
   })
 }
 
+resource "aws_s3_bucket_versioning" "images" {
+  bucket = aws_s3_bucket.images.id
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+
 resource "aws_s3_bucket_cors_configuration" "images" {
   bucket = aws_s3_bucket.images.id
 

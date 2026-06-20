@@ -61,6 +61,26 @@ app.use(helmet());
 app.use(cors());
 app.use(express.json());
 
+// ─── Rate limiter for auth routes (max 10 attempts per IP per 15 min) ─────────
+const authAttempts = new Map<string, { count: number; resetAt: number }>();
+function authRateLimit(req: express.Request, res: express.Response, next: express.NextFunction) {
+  const ip = (req.headers['x-forwarded-for'] as string)?.split(',')[0].trim() || req.socket.remoteAddress || 'unknown';
+  const now = Date.now();
+  const window = 15 * 60 * 1000; // 15 minutes
+  const max = 10;
+  const entry = authAttempts.get(ip);
+  if (entry && now < entry.resetAt) {
+    if (entry.count >= max) {
+      res.status(429).json({ error: 'יותר מדי ניסיונות. נסה שוב בעוד 15 דקות.' });
+      return;
+    }
+    entry.count++;
+  } else {
+    authAttempts.set(ip, { count: 1, resetAt: now + window });
+  }
+  next();
+}
+
 // ─── Auth middleware ──────────────────────────────────────────────────────────
 function getRequestUser(req: express.Request): { userId: string } | null {
   const authHeader = req.headers.authorization;
@@ -206,7 +226,7 @@ app.post('/api/orders', async (req, res) => {
 });
 
 // ─── User auth ────────────────────────────────────────────────────────────────
-app.post('/api/auth/register', async (req, res) => {
+app.post('/api/auth/register', authRateLimit, async (req, res) => {
   try {
     const { email, password, name, phone, address } = req.body;
     if (!email || !password || !name) {
@@ -254,7 +274,7 @@ app.post('/api/auth/google', async (req, res) => {
   }
 });
 
-app.post('/api/auth/login', async (req, res) => {
+app.post('/api/auth/login', authRateLimit, async (req, res) => {
   try {
     const { email, password } = req.body;
     if (!email || !password) { res.status(400).json({ error: 'email and password required' }); return; }
