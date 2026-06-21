@@ -47,6 +47,8 @@ resource "aws_lambda_function" "backend" {
       IMAGES_BUCKET                       = aws_s3_bucket.images.bucket
       IMAGES_BASE_URL                     = "https://${aws_s3_bucket.images.bucket_regional_domain_name}"
       NEW_ORDER_TOPIC_ARN                 = aws_sns_topic.new_order.arn
+      TELEGRAM_BOT_TOKEN                  = var.telegram_bot_token
+      TELEGRAM_CHAT_ID                    = var.telegram_chat_id
     }
   }
 

@@ -45,3 +45,16 @@ variable "whatsapp_phone" {
   type        = string
   default     = ""
 }
+
+variable "telegram_bot_token" {
+  description = "Telegram bot token from @BotFather"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+variable "telegram_chat_id" {
+  description = "Telegram group/chat ID to send notifications to"
+  type        = string
+  default     = ""
+}

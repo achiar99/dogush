@@ -41,18 +41,40 @@ const googleClient = new OAuth2Client(GOOGLE_CLIENT_ID);
 
 const snsClient = new SNSClient({ region: process.env.AWS_REGION || 'eu-north-1' });
 
+const TELEGRAM_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '';
+const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID || '';
+
+async function sendTelegram(text: string) {
+  if (!TELEGRAM_TOKEN || !TELEGRAM_CHAT_ID) return;
+  try {
+    await fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text, parse_mode: 'HTML' }),
+    });
+  } catch (e) {
+    console.error('Telegram notify error:', e);
+  }
+}
+
 async function notifyNewOrder(order: { orderId: string; customer: string; total: number; items: unknown[] }) {
   const topicArn = process.env.NEW_ORDER_TOPIC_ARN;
-  if (!topicArn) return;
-  try {
-    await snsClient.send(new PublishCommand({
-      TopicArn: topicArn,
-      Subject: `הזמנה חדשה #${order.orderId}`,
-      Message: `הזמנה חדשה התקבלה!\n\nמספר: #${order.orderId}\nלקוח: ${order.customer}\nסכום: ₪${order.total}\nפריטים: ${order.items.length}`,
-    }));
-  } catch (e) {
-    console.error('SNS notify error:', e);
+  if (topicArn) {
+    try {
+      await snsClient.send(new PublishCommand({
+        TopicArn: topicArn,
+        Subject: `הזמנה חדשה #${order.orderId}`,
+        Message: `הזמנה חדשה התקבלה!\n\nמספר: #${order.orderId}\nלקוח: ${order.customer}\nסכום: ₪${order.total}\nפריטים: ${order.items.length}`,
+      }));
+    } catch (e) {
+      console.error('SNS notify error:', e);
+    }
   }
+  await sendTelegram(`🛒 <b>הזמנה חדשה!</b>\n\n📦 מספר: <code>#${order.orderId}</code>\n👤 לקוח: ${order.customer}\n💰 סכום: ₪${order.total}\n🔢 פריטים: ${order.items.length}`);
+}
+
+async function notifyNewUser(name: string, email: string) {
+  await sendTelegram(`👤 <b>משתמש חדש נרשם!</b>\n\n🙋 שם: ${name}\n📧 אימייל: ${email}`);
 }
 
 export const app = express();
@@ -262,6 +284,7 @@ app.post('/api/auth/register', authRateLimit, async (req, res) => {
     const passwordHash = await bcrypt.hash(password, 10);
     const user = await createUser({ email: email.toLowerCase(), passwordHash, name, phone, address });
     const token = jwt.sign({ userId: user.userId }, JWT_SECRET, { expiresIn: '30d' });
+    notifyNewUser(user.name, user.email);
     res.status(201).json({ token, user: { userId: user.userId, email: user.email, name: user.name, phone: user.phone, address: user.address } });
   } catch (error) {
     console.error('Register error:', error);
@@ -281,6 +304,7 @@ app.post('/api/auth/google', async (req, res) => {
     }
     const email = tokenInfo.email.toLowerCase();
     let user = await getUserByEmail(email);
+    const isNew = !user;
     if (!user) {
       user = await createUser({
         email,
@@ -290,6 +314,7 @@ app.post('/api/auth/google', async (req, res) => {
         address: '',
       });
     }
+    if (isNew) notifyNewUser(user.name, user.email);
     const token = jwt.sign({ userId: user.userId }, JWT_SECRET, { expiresIn: '30d' });
     res.json({ token, user: { userId: user.userId, email: user.email, name: user.name, phone: user.phone, address: user.address } });
   } catch (error) {
