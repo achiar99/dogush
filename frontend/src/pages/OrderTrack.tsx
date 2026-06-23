@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import Header from '../components/Header';
 
 const API = import.meta.env.VITE_API_BASE_URL || '';
@@ -21,20 +22,21 @@ interface Order {
 }
 
 export default function OrderTrack() {
+  const [searchParams] = useSearchParams();
   const [input, setInput] = useState('');
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(false);
   const [notFound, setNotFound] = useState(false);
 
-  const search = async () => {
-    const id = input.trim().replace(/^#/, '').padStart(7, '0');
-    if (!id) return;
+  const fetchOrder = async (id: string, orderToken?: string) => {
     setLoading(true);
     setNotFound(false);
     setOrder(null);
     try {
-      const res = await fetch(`${API}/api/orders/${id}`);
-      if (res.status === 404) { setNotFound(true); return; }
+      const url = new URL(`${API}/api/orders/${id}`, window.location.origin);
+      if (orderToken) url.searchParams.set('token', orderToken);
+      const res = await fetch(url.toString());
+      if (res.status === 404 || res.status === 403) { setNotFound(true); return; }
       if (!res.ok) throw new Error();
       setOrder(await res.json());
     } catch {
@@ -42,6 +44,24 @@ export default function OrderTrack() {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Auto-load when navigated from checkout with ?id=&token=
+  useEffect(() => {
+    const id = searchParams.get('id');
+    const tok = searchParams.get('token') ?? undefined;
+    if (id) {
+      setInput(id);
+      fetchOrder(id, tok);
+    }
+  }, []);
+
+  const search = async () => {
+    const id = input.trim().replace(/^#/, '').padStart(7, '0');
+    if (!id) return;
+    // Token from URL (if user refreshes the page)
+    const tok = searchParams.get('token') ?? undefined;
+    fetchOrder(id, tok);
   };
 
   const fmt = (iso: string) => new Intl.DateTimeFormat('he-IL', { dateStyle: 'long', timeStyle: 'short' }).format(new Date(iso));
@@ -75,7 +95,8 @@ export default function OrderTrack() {
         {notFound && (
           <div style={{ textAlign: 'center', padding: '32px 0', color: '#888' }}>
             <div style={{ fontSize: 40, marginBottom: 10 }}>🔍</div>
-            <p style={{ margin: 0 }}>לא נמצאה הזמנה עם מספר זה</p>
+            <p style={{ margin: 0, marginBottom: 8 }}>לא נמצאה הזמנה עם מספר זה</p>
+            <p style={{ margin: 0, fontSize: '0.85rem', color: '#aaa' }}>אם סיימת הזמנה, חפש דרך הקישור שקיבלת באישור</p>
           </div>
         )}
 

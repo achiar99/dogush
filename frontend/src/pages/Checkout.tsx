@@ -107,7 +107,33 @@ export default function Checkout() {
   };
 
   const handleOrder = async () => {
-    setDone(true);
+    if (!form.customer.trim()) { setError('שם מלא חובה'); return; }
+    setSubmitting(true);
+    setError(null);
+    try {
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      const res = await fetch(`${API}/api/orders`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          customer: form.customer,
+          address: form.address,
+          email: form.email,
+          items: items.map(i => ({ id: i.id, quantity: i.quantity })),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setError(data.error || 'שגיאה ביצירת הזמנה'); return; }
+      clear();
+      const params = new URLSearchParams({ id: data.orderId });
+      if (data.orderToken) params.set('token', data.orderToken);
+      navigate(`/track?${params.toString()}`);
+    } catch {
+      setError('שגיאת חיבור, נסה שוב');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   if (done) {

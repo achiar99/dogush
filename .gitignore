@@ -19,3 +19,8 @@ infra/terraform.tfstate.d/
 
 # Lambda build output
 backend/lambda-package/
+backend/lambda.zip
+
+# Terraform plan files (may contain secrets)
+infra/tfplan
+infra/*.tfplan

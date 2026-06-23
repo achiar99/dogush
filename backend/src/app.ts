@@ -180,7 +180,7 @@ function requireAdmin(
   const token = authHeader.split(' ')[1];
   try {
     const decoded = jwt.verify(token, JWT_SECRET!) as { username?: string; role?: string };
-    if (!decoded.username && decoded.role !== 'admin') {
+    if (decoded.role !== 'admin') {
       res.status(403).json({ error: 'Forbidden' });
       return;
     }
@@ -273,16 +273,24 @@ app.get('/api/foods', async (_req, res) => {
 
 app.post('/api/orders', async (req, res) => {
   try {
-    const { customer, address, email, items, total } = req.body;
+    const { customer, address, email, items } = req.body;
     if (!isValidStr(customer, 100)) { res.status(400).json({ error: 'שם לקוח לא תקין' }); return; }
     if (!Array.isArray(items) || items.length === 0 || items.length > 100) { res.status(400).json({ error: 'פריטים לא תקינים' }); return; }
-    if (!isValidPrice(total)) { res.status(400).json({ error: 'סכום לא תקין' }); return; }
     if (email && !isValidEmail(email)) { res.status(400).json({ error: 'אימייל לא תקין' }); return; }
     if (address && !isValidStr(address, 200)) { res.status(400).json({ error: 'כתובת לא תקינה' }); return; }
+    // Calculate total server-side from DB prices
+    const productResults = await Promise.all(items.map((it: { id: string }) => getProduct(it.id)));
+    for (let i = 0; i < items.length; i++) {
+      if (!productResults[i]) { res.status(400).json({ error: 'מוצר לא קיים' }); return; }
+    }
+    const total = items.reduce((sum: number, it: { id: string; quantity: number }, i: number) =>
+      sum + productResults[i]!.price * (it.quantity || 1), 0);
     const userClaim = getRequestUser(req);
     const order = await createOrder({ customer, address, email, items, total, ...(userClaim ? { userId: userClaim.userId } : {}) });
     notifyNewOrder(order);
-    res.status(201).json(order);
+    // Return orderToken only at creation time so guest can track their order
+    const { email: _e, userId: _u, ...orderResponse } = order as any;
+    res.status(201).json(orderResponse);
   } catch (error) {
     if (error instanceof OutOfStockError) {
       res.status(409).json({ error: 'out_of_stock', productId: error.productId });
@@ -403,11 +411,19 @@ app.get('/api/orders/:id', async (req, res) => {
     const order = await getOrder(String(req.params.id));
     if (!order) { res.status(404).json({ error: 'Not found' }); return; }
     const userClaim = getRequestUser(req);
-    // Allow only the order owner (or guest orders with no userId)
-    if (order.userId && (!userClaim || userClaim.userId !== order.userId)) {
-      res.status(403).json({ error: 'Forbidden' }); return;
+    if (order.userId) {
+      // Authenticated order: require matching user
+      if (!userClaim || userClaim.userId !== order.userId) {
+        res.status(403).json({ error: 'Forbidden' }); return;
+      }
+    } else {
+      // Guest order: require the secret orderToken issued at creation
+      const token = req.query.token as string | undefined;
+      if (!order.orderToken || token !== order.orderToken) {
+        res.status(403).json({ error: 'Forbidden' }); return;
+      }
     }
-    const { email: _email, userId: _userId, ...safe } = order as any;
+    const { email: _email, userId: _userId, orderToken: _tok, ...safe } = order as any;
     res.json(safe);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch order' });

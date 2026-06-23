@@ -119,6 +119,7 @@ export interface OrderItem {
 
 export interface Order {
   orderId: string;
+  orderToken?: string; // random UUID for unauthenticated order lookup
   customer: string;
   address?: string;
   email?: string;
@@ -135,11 +136,12 @@ export class OutOfStockError extends Error {
   }
 }
 
-export async function createOrder(data: Omit<Order, 'orderId' | 'status' | 'createdAt'>): Promise<Order> {
+export async function createOrder(data: Omit<Order, 'orderId' | 'orderToken' | 'status' | 'createdAt'>): Promise<Order> {
   const n = await nextCounter('orders');
   const order: Order = {
     ...data,
     orderId: formatOrderId(n),
+    orderToken: data.userId ? undefined : randomUUID(), // only for guest orders
     status: 'open',
     createdAt: new Date().toISOString(),
   };
