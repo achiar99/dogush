@@ -5,7 +5,7 @@ import { getAdminByUsername } from './dynamodb';
 
 const router = Router();
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
+const JWT_SECRET = process.env.JWT_SECRET!; // crash at startup (via app.ts) if not set
 
 router.post('/login', async (req, res) => {
   try {

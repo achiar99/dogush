@@ -35,7 +35,11 @@ import { getPresignedUploadUrl } from './s3';
 import { SNSClient, PublishCommand } from '@aws-sdk/client-sns';
 import heConfig from '../../shared/he.json';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+  console.error('FATAL: JWT_SECRET environment variable is not set');
+  process.exit(1);
+}
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '463119481219-u3u4o1ciif29aeus545hiibs7fhd98dt.apps.googleusercontent.com';
 const googleClient = new OAuth2Client(GOOGLE_CLIENT_ID);
 
@@ -132,7 +136,7 @@ function getRequestUser(req: express.Request): { userId: string } | null {
   if (!authHeader?.startsWith('Bearer ')) return null;
   const token = authHeader.split(' ')[1];
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as { userId?: string; username?: string };
+    const decoded = jwt.verify(token, JWT_SECRET!) as { userId?: string; username?: string };
     if (decoded.userId) return { userId: decoded.userId };
     return null;
   } catch {
@@ -163,7 +167,11 @@ function requireAdmin(
   }
   const token = authHeader.split(' ')[1];
   try {
-    jwt.verify(token, JWT_SECRET);
+    const decoded = jwt.verify(token, JWT_SECRET!) as { username?: string; role?: string };
+    if (!decoded.username && decoded.role !== 'admin') {
+      res.status(403).json({ error: 'Forbidden' });
+      return;
+    }
     next();
   } catch {
     res.status(401).json({ error: 'Invalid token' });
@@ -184,7 +192,9 @@ app.post('/api/track', async (req, res) => {
     let country: string | undefined;
     let region: string | undefined;
 
-    if (ip && ip !== '127.0.0.1' && !ip.startsWith('::')) {
+    const IPV4_RE = /^(\d{1,3}\.){3}\d{1,3}$/;
+    const isPublicIp = ip && IPV4_RE.test(ip) && ip !== '127.0.0.1' && !ip.startsWith('10.') && !ip.startsWith('192.168.') && !ip.startsWith('172.');
+    if (isPublicIp) {
       try {
         const geo = await fetch(`http://ip-api.com/json/${ip}?fields=city,country,regionName`);
         if (geo.ok) {
@@ -283,7 +293,7 @@ app.post('/api/auth/register', authRateLimit, async (req, res) => {
     if (existing) { res.status(409).json({ error: 'כתובת האימייל כבר בשימוש' }); return; }
     const passwordHash = await bcrypt.hash(password, 10);
     const user = await createUser({ email: email.toLowerCase(), passwordHash, name, phone, address });
-    const token = jwt.sign({ userId: user.userId }, JWT_SECRET, { expiresIn: '30d' });
+    const token = jwt.sign({ userId: user.userId }, JWT_SECRET!, { expiresIn: '30d' });
     await notifyNewUser(user.name, user.email);
     res.status(201).json({ token, user: { userId: user.userId, email: user.email, name: user.name, phone: user.phone, address: user.address } });
   } catch (error) {
@@ -296,11 +306,15 @@ app.post('/api/auth/google', async (req, res) => {
   try {
     const { accessToken, email: emailFromClient, name: nameFromClient } = req.body;
     if (!accessToken) { res.status(400).json({ error: 'accessToken required' }); return; }
-    // Verify access token with Google
-    const tokenInfoRes = await fetch(`https://www.googleapis.com/oauth2/v3/tokeninfo?access_token=${accessToken}`);
-    const tokenInfo = await tokenInfoRes.json() as { error?: string; email?: string };
+    // Verify access token with Google and validate audience
+    const tokenInfoRes = await fetch(`https://www.googleapis.com/oauth2/v3/tokeninfo?access_token=${encodeURIComponent(accessToken)}`);
+    const tokenInfo = await tokenInfoRes.json() as { error?: string; email?: string; aud?: string; azp?: string };
     if (tokenInfo.error || !tokenInfo.email) {
       res.status(401).json({ error: 'Invalid Google token' }); return;
+    }
+    const tokenAudience = tokenInfo.aud || tokenInfo.azp;
+    if (tokenAudience !== GOOGLE_CLIENT_ID) {
+      res.status(401).json({ error: 'Invalid Google token audience' }); return;
     }
     const email = tokenInfo.email.toLowerCase();
     let user = await getUserByEmail(email);
@@ -315,7 +329,7 @@ app.post('/api/auth/google', async (req, res) => {
       });
     }
     if (isNew) await notifyNewUser(user.name, user.email);
-    const token = jwt.sign({ userId: user.userId }, JWT_SECRET, { expiresIn: '30d' });
+    const token = jwt.sign({ userId: user.userId }, JWT_SECRET!, { expiresIn: '30d' });
     res.json({ token, user: { userId: user.userId, email: user.email, name: user.name, phone: user.phone, address: user.address } });
   } catch (error) {
     console.error('Google auth error:', error);
@@ -331,7 +345,7 @@ app.post('/api/auth/login', authRateLimit, async (req, res) => {
     if (!user) { res.status(401).json({ error: 'אימייל או סיסמה שגויים' }); return; }
     const valid = await bcrypt.compare(password, user.passwordHash);
     if (!valid) { res.status(401).json({ error: 'אימייל או סיסמה שגויים' }); return; }
-    const token = jwt.sign({ userId: user.userId }, JWT_SECRET, { expiresIn: '30d' });
+    const token = jwt.sign({ userId: user.userId }, JWT_SECRET!, { expiresIn: '30d' });
     res.json({ token, user: { userId: user.userId, email: user.email, name: user.name, phone: user.phone, address: user.address } });
   } catch (error) {
     console.error('Login error:', error);
@@ -376,7 +390,11 @@ app.get('/api/orders/:id', async (req, res) => {
   try {
     const order = await getOrder(String(req.params.id));
     if (!order) { res.status(404).json({ error: 'Not found' }); return; }
-    // Return only safe fields (no email for unauthenticated requests)
+    const userClaim = getRequestUser(req);
+    // Allow only the order owner (or guest orders with no userId)
+    if (order.userId && (!userClaim || userClaim.userId !== order.userId)) {
+      res.status(403).json({ error: 'Forbidden' }); return;
+    }
     const { email: _email, userId: _userId, ...safe } = order as any;
     res.json(safe);
   } catch (error) {
@@ -577,11 +595,17 @@ app.get('/api/admin/tables', requireAdmin, async (_req, res) => {
 });
 
 // ─── Admin: presigned S3 upload URL ──────────────────────────────────────────
+const ALLOWED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/avif']);
+
 app.post('/api/admin/upload-url', requireAdmin, async (req, res) => {
   try {
     const { filename, contentType } = req.body;
     if (!filename || !contentType) {
       res.status(400).json({ error: 'filename and contentType are required' });
+      return;
+    }
+    if (!ALLOWED_IMAGE_TYPES.has(contentType)) {
+      res.status(400).json({ error: 'סוג קובץ לא מורשה. ניתן להעלות תמונות בלבד.' });
       return;
     }
     const result = await getPresignedUploadUrl(filename, contentType);
