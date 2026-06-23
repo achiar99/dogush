@@ -85,7 +85,7 @@ export default function AdminAnalytics() {
     <AdminLayout>
       <div style={{ direction: 'rtl' }}>
         <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: 12, marginBottom: 24 }}>
-          <h1 style={{ margin: 0, fontSize: 24, fontWeight: 900 }}>📈 אנליטיקס</h1>
+          <h1 style={{ margin: 0, fontSize: 24, fontWeight: 900 }}>📈 אנליטיקה</h1>
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
             {RANGES.map(r => (
               <button key={r.days} onClick={() => setRange(r.days)} style={{

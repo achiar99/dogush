@@ -38,6 +38,16 @@ export async function getAdminByUsername(username: string): Promise<AdminUser | 
 }
 
 // ─── Products ─────────────────────────────────────────────────────────────────
+export interface NutritionalValue {
+  name: string;
+  value: string;
+}
+
+export interface FeedingRow {
+  petWeight: string;
+  amount: string;
+}
+
 export interface Product {
   id: string;
   name: string;
@@ -48,6 +58,11 @@ export interface Product {
   imageFile?: string;
   badge?: string;
   stock?: number;
+  weight?: string;
+  ingredients?: string;
+  nutritionalValues?: NutritionalValue[];
+  feedingTable?: FeedingRow[];
+  feedingNote?: string;
 }
 
 export async function listProducts(includeInactive = false): Promise<Product[]> {

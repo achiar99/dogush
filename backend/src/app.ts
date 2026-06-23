@@ -284,7 +284,7 @@ app.post('/api/auth/register', authRateLimit, async (req, res) => {
     const passwordHash = await bcrypt.hash(password, 10);
     const user = await createUser({ email: email.toLowerCase(), passwordHash, name, phone, address });
     const token = jwt.sign({ userId: user.userId }, JWT_SECRET, { expiresIn: '30d' });
-    notifyNewUser(user.name, user.email);
+    await notifyNewUser(user.name, user.email);
     res.status(201).json({ token, user: { userId: user.userId, email: user.email, name: user.name, phone: user.phone, address: user.address } });
   } catch (error) {
     console.error('Register error:', error);
@@ -314,7 +314,7 @@ app.post('/api/auth/google', async (req, res) => {
         address: '',
       });
     }
-    if (isNew) notifyNewUser(user.name, user.email);
+    if (isNew) await notifyNewUser(user.name, user.email);
     const token = jwt.sign({ userId: user.userId }, JWT_SECRET, { expiresIn: '30d' });
     res.json({ token, user: { userId: user.userId, email: user.email, name: user.name, phone: user.phone, address: user.address } });
   } catch (error) {

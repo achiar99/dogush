@@ -26,6 +26,9 @@ interface Category {
   name: string;
 }
 
+interface NutritionalValue { name: string; value: string; }
+interface FeedingRow { petWeight: string; amount: string; }
+
 interface Product {
   id: string;
   name: string;
@@ -36,6 +39,11 @@ interface Product {
   imageFile?: string;
   badge?: 'new' | 'sale' | '';
   stock?: number;
+  weight?: string;
+  ingredients?: string;
+  nutritionalValues?: NutritionalValue[];
+  feedingTable?: FeedingRow[];
+  feedingNote?: string;
 }
 
 type DraftProduct = Omit<Product, 'id'> & { id?: string };
@@ -54,6 +62,11 @@ function emptyProduct(categories: Category[]): DraftProduct {
     imageFile: '',
     badge: '',
     stock: undefined,
+    weight: '',
+    ingredients: '',
+    nutritionalValues: [],
+    feedingTable: [],
+    feedingNote: '',
   };
 }
 
@@ -280,124 +293,154 @@ export default function ProductEditor() {
       )}
 
       {draft && (
-        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 1000 }}>
-          <div style={{ backgroundColor: '#fff', padding: 24, borderRadius: '16px 16px 0 0', width: '100%', maxWidth: 520, maxHeight: '90vh', overflowY: 'auto', direction: 'rtl' }}>
-            <h2 style={{ margin: '0 0 20px' }}>
-              {isNew ? strings.addProductTitle : strings.editProductTitle}
-            </h2>
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 16 }}>
+          <div style={{ backgroundColor: '#fff', borderRadius: 16, width: '100%', maxWidth: 620, maxHeight: '92vh', display: 'flex', flexDirection: 'column', direction: 'rtl', boxShadow: '0 20px 60px rgba(0,0,0,0.3)' }}>
 
-            <Field label={strings.tableHeaderName}>
-              <input
-                value={draft.name}
-                onChange={e => handleChange('name', e.target.value)}
-                style={inputStyle}
-                autoFocus
-              />
-            </Field>
+            {/* Header */}
+            <div style={{ padding: '20px 24px', borderBottom: '1px solid #f0f0f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
+              <div>
+                <h2 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 700, color: '#1e1e2e' }}>
+                  {isNew ? '+ ' + strings.addProductTitle : '✏️ ' + strings.editProductTitle}
+                </h2>
+                {!isNew && draft.name && <p style={{ margin: '2px 0 0', fontSize: '0.82rem', color: '#888' }}>{draft.name}</p>}
+              </div>
+              <button onClick={closeModal} style={{ background: '#f4f4f4', border: 'none', borderRadius: 8, width: 34, height: 34, cursor: 'pointer', fontSize: '1.1rem', color: '#555', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
+            </div>
 
-            <Field label={strings.productDescription}>
-              <textarea
-                value={draft.description}
-                onChange={e => handleChange('description', e.target.value)}
-                style={{ ...inputStyle, minHeight: 80 }}
-              />
-            </Field>
+            {/* Scrollable body */}
+            <div style={{ overflowY: 'auto', padding: '24px', flex: 1 }}>
 
-            <Field label={strings.tableHeaderPrice}>
-              <input
-                type="number"
-                value={draft.price || ''}
-                onChange={e => handleChange('price', Number(e.target.value))}
-                style={inputStyle}
-                min={0}
-              />
-            </Field>
+              {/* Section: Basic info */}
+              <SectionTitle>פרטים בסיסיים</SectionTitle>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 14 }}>
+                <div style={{ gridColumn: '1 / -1' }}>
+                  <Field label={strings.tableHeaderName}>
+                    <input value={draft.name} onChange={e => handleChange('name', e.target.value)} style={inputStyle} autoFocus />
+                  </Field>
+                </div>
+                <Field label={`${strings.tableHeaderPrice} (₪)`}>
+                  <input type="number" value={draft.price || ''} onChange={e => handleChange('price', Number(e.target.value))} style={inputStyle} min={0} />
+                </Field>
+                <Field label="מלאי (יחידות)">
+                  <input type="number" value={draft.stock ?? ''} onChange={e => handleChange('stock', e.target.value === '' ? undefined as any : Number(e.target.value))} style={inputStyle} min={0} placeholder="ריק = ללא מעקב" />
+                </Field>
+                <Field label={strings.tableHeaderCategory}>
+                  <select value={draft.category} onChange={e => handleChange('category', e.target.value)} style={inputStyle}>
+                    {categories.map(cat => <option key={cat.key} value={cat.key}>{cat.name}</option>)}
+                  </select>
+                </Field>
+                <Field label="תגית">
+                  <select value={draft.badge ?? ''} onChange={e => handleChange('badge', e.target.value)} style={inputStyle}>
+                    <option value="">ללא תגית</option>
+                    <option value="new">חדש 🔵</option>
+                    <option value="sale">מבצע 🔴</option>
+                  </select>
+                </Field>
+              </div>
 
-            <Field label="מלאי (יחידות)">
-              <input
-                type="number"
-                value={draft.stock ?? ''}
-                onChange={e => handleChange('stock', e.target.value === '' ? undefined as any : Number(e.target.value))}
-                style={inputStyle}
-                min={0}
-                placeholder="ריק = ללא מעקב מלאי"
-              />
-            </Field>
+              <Field label={strings.productDescription}>
+                <textarea value={draft.description} onChange={e => handleChange('description', e.target.value)} style={{ ...inputStyle, minHeight: 72, resize: 'vertical' }} />
+              </Field>
 
-            <Field label={strings.tableHeaderCategory}>
-              <select
-                value={draft.category}
-                onChange={e => handleChange('category', e.target.value)}
-                style={inputStyle}
-              >
-                {categories.map(cat => (
-                  <option key={cat.key} value={cat.key}>{cat.name}</option>
-                ))}
-              </select>
-            </Field>
-
-            <Field label={strings.productImage}>
-              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                <input
-                  type="text"
-                  value={draft.imageFile || ''}
-                  onChange={e => handleChange('imageFile', e.target.value)}
-                  placeholder="URL או העלה קובץ"
-                  style={{ ...inputStyle, flex: 1 }}
-                />
-                <label style={{ padding: '8px 14px', backgroundColor: uploadingImage ? '#aaa' : '#007bff', color: '#fff', borderRadius: 4, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0 }}>
-                  {uploadingImage ? '...' : 'העלה'}
-                  <input
-                    type="file"
-                    accept="image/*"
-                    style={{ display: 'none' }}
-                    disabled={uploadingImage}
-                    onChange={e => e.target.files?.[0] && handleImageUpload(e.target.files[0])}
-                  />
+              {/* Active toggle */}
+              <div style={{ marginBottom: 20, padding: '12px 16px', background: '#f8f8f8', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>{strings.tableHeaderActive}</span>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+                  <input type="checkbox" checked={draft.active} onChange={e => handleChange('active', e.target.checked)} style={{ width: 18, height: 18, cursor: 'pointer' }} />
+                  <span style={{ fontSize: '0.85rem', color: draft.active ? '#22c55e' : '#ef4444', fontWeight: 600 }}>{draft.active ? 'פעיל' : 'לא פעיל'}</span>
                 </label>
               </div>
-              {draft.imageFile?.startsWith('http') && (
-                <img src={draft.imageFile} alt="" style={{ marginTop: 8, maxHeight: 100, borderRadius: 4, objectFit: 'contain' }} />
+
+              {/* Section: Image */}
+              <SectionTitle>תמונה</SectionTitle>
+              <Field label="">
+                <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 8 }}>
+                  <input type="text" value={draft.imageFile || ''} onChange={e => handleChange('imageFile', e.target.value)} placeholder="URL תמונה" style={{ ...inputStyle, flex: 1 }} />
+                  <label style={{ padding: '9px 16px', backgroundColor: uploadingImage ? '#aaa' : '#1e1e2e', color: '#fff', borderRadius: 8, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0, fontSize: '0.88rem', fontWeight: 600 }}>
+                    {uploadingImage ? '...' : '⬆ העלה'}
+                    <input type="file" accept="image/*" style={{ display: 'none' }} disabled={uploadingImage} onChange={e => e.target.files?.[0] && handleImageUpload(e.target.files[0])} />
+                  </label>
+                </div>
+                {draft.imageFile && (
+                  <img src={draft.imageFile} alt="" style={{ maxHeight: 110, borderRadius: 8, objectFit: 'contain', border: '1px solid #eee' }} />
+                )}
+              </Field>
+
+              {/* Section: Product specs */}
+              <SectionTitle>מפרט מוצר</SectionTitle>
+
+              <Field label="⚖️ משקל תכולה">
+                <input value={draft.weight ?? ''} onChange={e => setDraft(p => p ? { ...p, weight: e.target.value } : p)}
+                  placeholder='למשל: 12 ק"ג' style={inputStyle} />
+              </Field>
+
+              <Field label="🧬 מרכיבים">
+                <textarea value={draft.ingredients ?? ''} onChange={e => setDraft(p => p ? { ...p, ingredients: e.target.value } : p)}
+                  placeholder="קמח עוף, תירס, חיטה..." style={{ ...inputStyle, minHeight: 72, resize: 'vertical' }} />
+              </Field>
+
+              <Field label="% תכולה תזונתית">
+                {(draft.nutritionalValues ?? []).length > 0 && (
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 100px 36px', gap: 6, marginBottom: 4 }}>
+                    <span style={{ fontSize: '0.78rem', color: '#888', paddingRight: 2 }}>שם</span>
+                    <span style={{ fontSize: '0.78rem', color: '#888' }}>ערך</span>
+                    <span />
+                  </div>
+                )}
+                {(draft.nutritionalValues ?? []).map((row, i) => (
+                  <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 100px 36px', gap: 6, marginBottom: 6 }}>
+                    <input value={row.name} onChange={e => { const nv = [...(draft.nutritionalValues ?? [])]; nv[i] = { ...nv[i], name: e.target.value }; setDraft(p => p ? { ...p, nutritionalValues: nv } : p); }} placeholder="חלבון" style={inputStyle} />
+                    <input value={row.value} onChange={e => { const nv = [...(draft.nutritionalValues ?? [])]; nv[i] = { ...nv[i], value: e.target.value }; setDraft(p => p ? { ...p, nutritionalValues: nv } : p); }} placeholder="22%" style={inputStyle} />
+                    <button onClick={() => setDraft(p => p ? { ...p, nutritionalValues: (p.nutritionalValues ?? []).filter((_, j) => j !== i) } : p)}
+                      style={{ background: '#fee2e2', color: '#dc2626', border: 'none', borderRadius: 6, cursor: 'pointer', fontWeight: 700 }}>✕</button>
+                  </div>
+                ))}
+                <button onClick={() => setDraft(p => p ? { ...p, nutritionalValues: [...(p.nutritionalValues ?? []), { name: '', value: '' }] } : p)}
+                  style={addRowBtn}>+ הוסף שורה</button>
+              </Field>
+
+              <Field label="📏 טבלת האכלה">
+                {(draft.feedingTable ?? []).length > 0 && (
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 36px', gap: 6, marginBottom: 4 }}>
+                    <span style={{ fontSize: '0.78rem', color: '#888' }}>משקל חיית מחמד</span>
+                    <span style={{ fontSize: '0.78rem', color: '#888' }}>כמות מומלצת</span>
+                    <span />
+                  </div>
+                )}
+                {(draft.feedingTable ?? []).map((row, i) => (
+                  <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 36px', gap: 6, marginBottom: 6 }}>
+                    <input value={row.petWeight} onChange={e => { const ft = [...(draft.feedingTable ?? [])]; ft[i] = { ...ft[i], petWeight: e.target.value }; setDraft(p => p ? { ...p, feedingTable: ft } : p); }} placeholder='10 ק"ג' style={inputStyle} />
+                    <input value={row.amount} onChange={e => { const ft = [...(draft.feedingTable ?? [])]; ft[i] = { ...ft[i], amount: e.target.value }; setDraft(p => p ? { ...p, feedingTable: ft } : p); }} placeholder="160-190 גרם" style={inputStyle} />
+                    <button onClick={() => setDraft(p => p ? { ...p, feedingTable: (p.feedingTable ?? []).filter((_, j) => j !== i) } : p)}
+                      style={{ background: '#fee2e2', color: '#dc2626', border: 'none', borderRadius: 6, cursor: 'pointer', fontWeight: 700 }}>✕</button>
+                  </div>
+                ))}
+                <button onClick={() => setDraft(p => p ? { ...p, feedingTable: [...(p.feedingTable ?? []), { petWeight: '', amount: '' }] } : p)}
+                  style={addRowBtn}>+ הוסף שורה</button>
+              </Field>
+
+              <Field label="הערה לטבלת האכלה">
+                <textarea value={draft.feedingNote ?? ''} onChange={e => setDraft(p => p ? { ...p, feedingNote: e.target.value } : p)}
+                  placeholder="כמויות האכלה המצוינות הינן כלליות בלבד..." style={{ ...inputStyle, minHeight: 60, resize: 'vertical' }} />
+              </Field>
+
+            </div>
+
+            {/* Footer */}
+            <div style={{ padding: '16px 24px', borderTop: '1px solid #f0f0f0', flexShrink: 0, display: 'flex', gap: 10, justifyContent: 'space-between', alignItems: 'center' }}>
+              {error && (
+                <div style={{ flex: 1, padding: '8px 12px', backgroundColor: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, color: '#dc2626', fontSize: '0.85rem' }}>
+                  {error}
+                </div>
               )}
-            </Field>
-
-            <Field label="">
-              <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
-                <input
-                  type="checkbox"
-                  checked={draft.active}
-                  onChange={e => handleChange('active', e.target.checked)}
-                  style={{ width: 18, height: 18 }}
-                />
-                {strings.tableHeaderActive}
-              </label>
-            </Field>
-
-            <Field label="תגית">
-              <select value={draft.badge ?? ''} onChange={e => handleChange('badge', e.target.value)} style={inputStyle}>
-                <option value="">ללא תגית</option>
-                <option value="new">חדש 🔵</option>
-                <option value="sale">מבצע 🔴</option>
-              </select>
-            </Field>
-
-            {error && (
-              <div style={{ marginBottom: 12, padding: 10, backgroundColor: '#fff3f3', border: '1px solid #f5c6cb', borderRadius: 4, color: '#721c24', fontSize: '0.9rem' }}>
-                {error}
+              <div style={{ display: 'flex', gap: 10, marginRight: 'auto' }}>
+                <button onClick={closeModal} style={{ padding: '10px 20px', cursor: 'pointer', borderRadius: 8, border: '1.5px solid #e0e0e0', background: '#fff', fontWeight: 600, fontSize: '0.9rem', fontFamily: 'inherit', color: '#555' }}>
+                  {strings.cancelButton}
+                </button>
+                <button onClick={save} disabled={saving || uploadingImage} style={{ padding: '10px 28px', backgroundColor: saving ? '#aaa' : '#1e1e2e', color: '#fff', border: 'none', borderRadius: 8, cursor: saving ? 'default' : 'pointer', fontWeight: 700, fontSize: '0.9rem', fontFamily: 'inherit' }}>
+                  {saving ? '...' : strings.saveButton}
+                </button>
               </div>
-            )}
-
-            <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', marginTop: 8 }}>
-              <button onClick={closeModal} style={{ padding: '10px 20px', cursor: 'pointer', borderRadius: 4, border: '1px solid #ccc' }}>
-                {strings.cancelButton}
-              </button>
-              <button
-                onClick={save}
-                disabled={saving || uploadingImage}
-                style={{ padding: '10px 24px', backgroundColor: saving ? '#aaa' : '#28a745', color: '#fff', border: 'none', borderRadius: 4, cursor: saving ? 'default' : 'pointer', fontWeight: 'bold' }}
-              >
-                {saving ? '...' : strings.saveButton}
-              </button>
             </div>
           </div>
         </div>
@@ -408,18 +451,43 @@ export default function ProductEditor() {
 
 const inputStyle: React.CSSProperties = {
   width: '100%',
-  padding: 8,
+  padding: '9px 12px',
   boxSizing: 'border-box',
-  border: '1px solid #ccc',
-  borderRadius: 4,
-  fontSize: '1rem',
+  border: '1.5px solid #e0e0e0',
+  borderRadius: 8,
+  fontSize: '0.92rem',
+  fontFamily: 'inherit',
+  outline: 'none',
+  transition: 'border-color 0.15s',
+  background: '#fafafa',
+};
+
+const addRowBtn: React.CSSProperties = {
+  padding: '6px 14px',
+  background: '#f0f0f8',
+  border: '1.5px dashed #c0c0e0',
+  borderRadius: 8,
+  cursor: 'pointer',
+  fontSize: '0.83rem',
+  color: '#555',
+  fontFamily: 'inherit',
+  marginTop: 2,
 };
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div style={{ marginBottom: 16 }}>
-      {label && <label style={{ display: 'block', marginBottom: 4, fontWeight: 500 }}>{label}</label>}
+    <div style={{ marginBottom: 14 }}>
+      {label && <label style={{ display: 'block', marginBottom: 5, fontWeight: 600, fontSize: '0.83rem', color: '#555', textTransform: 'uppercase', letterSpacing: '0.03em' }}>{label}</label>}
       {children}
+    </div>
+  );
+}
+
+function SectionTitle({ children }: { children: React.ReactNode }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '20px 0 14px' }}>
+      <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#1e1e2e', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{children}</span>
+      <div style={{ flex: 1, height: 1, background: '#e8e8ee' }} />
     </div>
   );
 }

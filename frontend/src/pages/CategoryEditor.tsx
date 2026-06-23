@@ -10,12 +10,24 @@ interface Category {
 
 const inputStyle: React.CSSProperties = {
   width: '100%',
-  padding: 8,
+  padding: '9px 12px',
   boxSizing: 'border-box',
-  border: '1px solid #ccc',
-  borderRadius: 4,
-  fontSize: '1rem',
+  border: '1.5px solid #e0e0e0',
+  borderRadius: 8,
+  fontSize: '0.92rem',
+  fontFamily: 'inherit',
+  outline: 'none',
+  background: '#fafafa',
 };
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div style={{ marginBottom: 16 }}>
+      <label style={{ display: 'block', marginBottom: 5, fontWeight: 600, fontSize: '0.83rem', color: '#555', textTransform: 'uppercase', letterSpacing: '0.03em' }}>{label}</label>
+      {children}
+    </div>
+  );
+}
 
 export default function CategoryEditor() {
   const [categories, setCategories] = useState<Category[]>([]);
@@ -213,23 +225,28 @@ export default function CategoryEditor() {
 
       {/* Add modal */}
       {modalOpen && (
-        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 1000 }}>
-          <div style={{ backgroundColor: '#fff', padding: 24, borderRadius: '16px 16px 0 0', width: '100%', maxWidth: 460, direction: 'rtl' }}>
-            <h2 style={{ margin: '0 0 20px' }}>קטגוריה חדשה</h2>
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', marginBottom: 4, fontWeight: 500 }}>שם</label>
-              <input value={newName} onChange={e => setNewName(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleAdd()} style={inputStyle} autoFocus placeholder="אוכל יבש" />
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 16 }}>
+          <div style={{ backgroundColor: '#fff', borderRadius: 16, width: '100%', maxWidth: 420, direction: 'rtl', boxShadow: '0 20px 60px rgba(0,0,0,0.3)', overflow: 'hidden' }}>
+            <div style={{ padding: '20px 24px', borderBottom: '1px solid #f0f0f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h2 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700, color: '#1e1e2e' }}>+ קטגוריה חדשה</h2>
+              <button onClick={closeAdd} style={{ background: '#f4f4f4', border: 'none', borderRadius: 8, width: 34, height: 34, cursor: 'pointer', fontSize: '1.1rem', color: '#555', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
             </div>
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', marginBottom: 4, fontWeight: 500 }}>עדיפות (מספר קטן = מופיע ראשון)</label>
-              <input type="number" value={newPriority} onChange={e => setNewPriority(Number(e.target.value))} style={inputStyle} min={0} />
+            <div style={{ padding: '24px' }}>
+              <Field label="שם">
+                <input value={newName} onChange={e => setNewName(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleAdd()} style={inputStyle} autoFocus placeholder="אוכל יבש" />
+              </Field>
+              <Field label="עדיפות (מספר קטן = מופיע ראשון)">
+                <input type="number" value={newPriority} onChange={e => setNewPriority(Number(e.target.value))} style={inputStyle} min={0} />
+              </Field>
             </div>
-            {error && <div style={{ marginBottom: 12, padding: 10, backgroundColor: '#fff3f3', border: '1px solid #f5c6cb', borderRadius: 4, color: '#721c24', fontSize: '0.9rem' }}>{error}</div>}
-            <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
-              <button onClick={closeAdd} style={{ padding: '10px 20px', cursor: 'pointer', borderRadius: 4, border: '1px solid #ccc' }}>ביטול</button>
-              <button onClick={handleAdd} disabled={saving} style={{ padding: '10px 24px', backgroundColor: saving ? '#aaa' : '#28a745', color: '#fff', border: 'none', borderRadius: 4, cursor: saving ? 'default' : 'pointer', fontWeight: 'bold' }}>
-                {saving ? '...' : 'שמור'}
-              </button>
+            <div style={{ padding: '16px 24px', borderTop: '1px solid #f0f0f0', display: 'flex', gap: 10, justifyContent: 'space-between', alignItems: 'center' }}>
+              {error && <div style={{ flex: 1, padding: '8px 12px', backgroundColor: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, color: '#dc2626', fontSize: '0.85rem' }}>{error}</div>}
+              <div style={{ display: 'flex', gap: 10, marginRight: 'auto' }}>
+                <button onClick={closeAdd} style={{ padding: '10px 20px', cursor: 'pointer', borderRadius: 8, border: '1.5px solid #e0e0e0', background: '#fff', fontWeight: 600, fontSize: '0.9rem', fontFamily: 'inherit', color: '#555' }}>ביטול</button>
+                <button onClick={handleAdd} disabled={saving} style={{ padding: '10px 28px', backgroundColor: saving ? '#aaa' : '#1e1e2e', color: '#fff', border: 'none', borderRadius: 8, cursor: saving ? 'default' : 'pointer', fontWeight: 700, fontSize: '0.9rem', fontFamily: 'inherit' }}>
+                  {saving ? '...' : 'שמור'}
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -237,23 +254,31 @@ export default function CategoryEditor() {
 
       {/* Edit modal */}
       {editCat && (
-        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 1000 }}>
-          <div style={{ backgroundColor: '#fff', padding: 24, borderRadius: '16px 16px 0 0', width: '100%', maxWidth: 460, direction: 'rtl' }}>
-            <h2 style={{ margin: '0 0 20px' }}>עריכת קטגוריה</h2>
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', marginBottom: 4, fontWeight: 500 }}>שם</label>
-              <input value={editName} onChange={e => setEditName(e.target.value)} style={inputStyle} autoFocus />
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 16 }}>
+          <div style={{ backgroundColor: '#fff', borderRadius: 16, width: '100%', maxWidth: 420, direction: 'rtl', boxShadow: '0 20px 60px rgba(0,0,0,0.3)', overflow: 'hidden' }}>
+            <div style={{ padding: '20px 24px', borderBottom: '1px solid #f0f0f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <h2 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700, color: '#1e1e2e' }}>✏️ עריכת קטגוריה</h2>
+                <p style={{ margin: '2px 0 0', fontSize: '0.82rem', color: '#888' }}>{editCat.name}</p>
+              </div>
+              <button onClick={closeEdit} style={{ background: '#f4f4f4', border: 'none', borderRadius: 8, width: 34, height: 34, cursor: 'pointer', fontSize: '1.1rem', color: '#555', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
             </div>
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', marginBottom: 4, fontWeight: 500 }}>עדיפות (מספר קטן = מופיע ראשון)</label>
-              <input type="number" value={editPriority} onChange={e => setEditPriority(Number(e.target.value))} style={inputStyle} min={0} />
+            <div style={{ padding: '24px' }}>
+              <Field label="שם">
+                <input value={editName} onChange={e => setEditName(e.target.value)} style={inputStyle} autoFocus />
+              </Field>
+              <Field label="עדיפות (מספר קטן = מופיע ראשון)">
+                <input type="number" value={editPriority} onChange={e => setEditPriority(Number(e.target.value))} style={inputStyle} min={0} />
+              </Field>
             </div>
-            {editError && <div style={{ marginBottom: 12, padding: 10, backgroundColor: '#fff3f3', border: '1px solid #f5c6cb', borderRadius: 4, color: '#721c24', fontSize: '0.9rem' }}>{editError}</div>}
-            <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
-              <button onClick={closeEdit} style={{ padding: '10px 20px', cursor: 'pointer', borderRadius: 4, border: '1px solid #ccc' }}>ביטול</button>
-              <button onClick={handleEdit} disabled={editSaving} style={{ padding: '10px 24px', backgroundColor: editSaving ? '#aaa' : '#28a745', color: '#fff', border: 'none', borderRadius: 4, cursor: editSaving ? 'default' : 'pointer', fontWeight: 'bold' }}>
-                {editSaving ? '...' : 'שמור'}
-              </button>
+            <div style={{ padding: '16px 24px', borderTop: '1px solid #f0f0f0', display: 'flex', gap: 10, justifyContent: 'space-between', alignItems: 'center' }}>
+              {editError && <div style={{ flex: 1, padding: '8px 12px', backgroundColor: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, color: '#dc2626', fontSize: '0.85rem' }}>{editError}</div>}
+              <div style={{ display: 'flex', gap: 10, marginRight: 'auto' }}>
+                <button onClick={closeEdit} style={{ padding: '10px 20px', cursor: 'pointer', borderRadius: 8, border: '1.5px solid #e0e0e0', background: '#fff', fontWeight: 600, fontSize: '0.9rem', fontFamily: 'inherit', color: '#555' }}>ביטול</button>
+                <button onClick={handleEdit} disabled={editSaving} style={{ padding: '10px 28px', backgroundColor: editSaving ? '#aaa' : '#1e1e2e', color: '#fff', border: 'none', borderRadius: 8, cursor: editSaving ? 'default' : 'pointer', fontWeight: 700, fontSize: '0.9rem', fontFamily: 'inherit' }}>
+                  {editSaving ? '...' : 'שמור'}
+                </button>
+              </div>
             </div>
           </div>
         </div>
