@@ -264,66 +264,75 @@ a {
 }
 
 .item-card__footer {
-  margin-top: 12px;
+  margin-top: auto;
+  padding-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.item-card__price-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: 8px;
 }
 
 .item-card__price {
   font-weight: 900;
-  font-size: 22px;
+  font-size: 24px;
   color: #1a1a1a;
   letter-spacing: -0.5px;
-  white-space: nowrap;
 }
 
 .item-card__actions {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  flex: 1;
-  min-width: 0;
+  display: contents;
 }
 
 .item-card__button {
   width: 100%;
-  height: 38px;
+  height: 44px;
   padding: 0 14px;
-  border-radius: 12px;
-  border: 1.5px solid #e0d8ce;
-  background: transparent;
+  border-radius: 14px;
+  border: none;
+  background: #c15f2a;
+  color: #fff;
   cursor: pointer;
   font-weight: 700;
-  font-size: 13px;
-  color: #555;
-  transition: border-color 0.15s, background 0.15s, color 0.15s;
+  font-size: 14px;
   font-family: inherit;
+  transition: background 0.18s, transform 0.15s;
   white-space: nowrap;
 }
 
 .item-card__button:hover {
-  border-color: #c15f2a;
-  color: #c15f2a;
-  background: #fdf6f1;
+  background: #a84e22;
+  transform: translateY(-1px);
 }
 
 .item-card__button--secondary {
-  background: #c15f2a;
-  color: #fff;
-  border-color: #c15f2a;
-  transition: background 0.2s, transform 0.15s;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border-radius: 14px;
+  background: #f5efe9;
+  color: #c15f2a;
+  border: none;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, transform 0.15s;
 }
 
 .item-card__button--secondary:hover {
-  background: #a84e22;
-  border-color: #a84e22;
+  background: #eee0d4;
+  transform: scale(1.06);
 }
 
 .item-card__button--added {
   background: #22c55e !important;
-  border-color: #22c55e !important;
+  color: #fff !important;
   transform: scale(1.02);
 }
 

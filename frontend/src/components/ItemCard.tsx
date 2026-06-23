@@ -156,24 +156,25 @@ export default function ItemCard({ item, onOrderNow }: Props) {
             </button>
           )}
           <div className="item-card__footer">
-            <div className="item-card__price">
-              {currencySymbol}{item.price}
-            </div>
             {outOfStock ? (
-              <span style={{ padding: '6px 14px', borderRadius: 999, backgroundColor: '#f3f3f3', color: '#aaa', fontWeight: 700, fontSize: '0.85rem' }}>
+              <span style={{ padding: '10px 14px', borderRadius: 14, backgroundColor: '#f3f3f3', color: '#aaa', fontWeight: 700, fontSize: '0.85rem', textAlign: 'center' }}>
                 אזל מהמלאי
               </span>
             ) : (
               <div className="item-card__actions">
-                <button className="item-card__button item-card__button--secondary" type="button" onClick={handleOrderNow}>
+                <div className="item-card__price-row">
+                  <button
+                    className={`item-card__button item-card__button--secondary${addedFlash ? ' item-card__button--added' : ''}`}
+                    type="button"
+                    onClick={handleAddToCart}
+                    title="הוסף לסל"
+                  >
+                    {addedFlash ? '✓' : '🛒'}
+                  </button>
+                  <div className="item-card__price">{currencySymbol}{item.price}</div>
+                </div>
+                <button className="item-card__button" type="button" onClick={handleOrderNow}>
                   {strings.orderNowButton}
-                </button>
-                <button
-                  className={`item-card__button${addedFlash ? ' item-card__button--added' : ''}`}
-                  type="button"
-                  onClick={handleAddToCart}
-                >
-                  {addedFlash ? '✓ נוסף לסל' : 'הוסף לסל 🛒'}
                 </button>
               </div>
             )}
