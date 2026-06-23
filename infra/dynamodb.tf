@@ -155,6 +155,22 @@ resource "aws_dynamodb_table" "page_views" {
   }
 }
 
+resource "aws_dynamodb_table" "rate_limit" {
+  name         = "${local.prefix}-RateLimit"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "pk"
+
+  attribute {
+    name = "pk"
+    type = "S"
+  }
+
+  ttl {
+    attribute_name = "ttl"
+    enabled        = true
+  }
+}
+
 resource "aws_dynamodb_table" "users" {
   name         = "${local.prefix}-Users"
   billing_mode = "PAY_PER_REQUEST"

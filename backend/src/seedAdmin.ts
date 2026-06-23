@@ -11,10 +11,14 @@ const docClient = DynamoDBDocumentClient.from(client);
 
 const TABLE    = process.env.ADMINS_TABLE || 'pet-store-dev-Admins';
 const username = process.env.ADMIN_USERNAME || 'admin';
-const password = process.env.ADMIN_PASSWORD || 'admin123';
+const password = process.env.ADMIN_PASSWORD;
+if (!password) {
+  console.error('ERROR: ADMIN_PASSWORD environment variable is required');
+  process.exit(1);
+}
 
 async function seed() {
-  const passwordHash = await bcrypt.hash(password, 10);
+  const passwordHash = await bcrypt.hash(password!, 10);
   await docClient.send(new PutCommand({ TableName: TABLE, Item: { username, passwordHash } }));
   console.log(`✓ Admin "${username}" upserted in ${TABLE}`);
 }

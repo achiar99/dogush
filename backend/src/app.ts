@@ -110,22 +110,34 @@ const isValidStr = (v: unknown, max = 200) => typeof v === 'string' && v.trim().
 const isValidPhone = (v: unknown) => !v || (typeof v === 'string' && v.length <= 20);
 const isValidPrice = (v: unknown) => typeof v === 'number' && v >= 0 && v <= 100000 && Number.isFinite(v);
 
-// ─── Rate limiter for auth routes (max 10 attempts per IP per 15 min) ─────────
-const authAttempts = new Map<string, { count: number; resetAt: number }>();
-function authRateLimit(req: express.Request, res: express.Response, next: express.NextFunction) {
+// ─── Rate limiter for auth routes — DynamoDB-backed (works across Lambda instances) ──
+import { UpdateCommand as RLUpdateCommand, GetCommand as RLGetCommand } from '@aws-sdk/lib-dynamodb';
+const RL_TABLE = process.env.RATE_LIMIT_TABLE || `pet-store-${process.env.NODE_ENV === 'production' ? 'prod' : 'dev'}-RateLimit`;
+const RL_MAX = 10;
+const RL_WINDOW_SEC = 15 * 60;
+
+async function authRateLimit(req: express.Request, res: express.Response, next: express.NextFunction) {
   const ip = (req.headers['x-forwarded-for'] as string)?.split(',')[0].trim() || req.socket.remoteAddress || 'unknown';
-  const now = Date.now();
-  const window = 15 * 60 * 1000; // 15 minutes
-  const max = 10;
-  const entry = authAttempts.get(ip);
-  if (entry && now < entry.resetAt) {
-    if (entry.count >= max) {
+  const windowKey = Math.floor(Date.now() / 1000 / RL_WINDOW_SEC); // changes every 15 min
+  const pk = `${ip}#${windowKey}`;
+  const ttl = Math.floor(Date.now() / 1000) + RL_WINDOW_SEC * 2;
+  try {
+    const { docClient } = await import('./dynamodb');
+    const result = await docClient.send(new RLUpdateCommand({
+      TableName: RL_TABLE,
+      Key: { pk },
+      UpdateExpression: 'ADD #c :one SET #ttl = if_not_exists(#ttl, :ttl)',
+      ExpressionAttributeNames: { '#c': 'count', '#ttl': 'ttl' },
+      ExpressionAttributeValues: { ':one': 1, ':ttl': ttl },
+      ReturnValues: 'UPDATED_NEW',
+    }));
+    const count = result.Attributes?.count as number;
+    if (count > RL_MAX) {
       res.status(429).json({ error: 'יותר מדי ניסיונות. נסה שוב בעוד 15 דקות.' });
       return;
     }
-    entry.count++;
-  } else {
-    authAttempts.set(ip, { count: 1, resetAt: now + window });
+  } catch {
+    // If DynamoDB is unreachable, fail open (don't block legitimate traffic)
   }
   next();
 }

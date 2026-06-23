@@ -44,6 +44,7 @@ resource "aws_lambda_function" "backend" {
       CATEGORIES_TABLE                    = aws_dynamodb_table.categories.name
       COUNTERS_TABLE                      = aws_dynamodb_table.counters.name
       PAGE_VIEWS_TABLE                    = aws_dynamodb_table.page_views.name
+      RATE_LIMIT_TABLE                    = aws_dynamodb_table.rate_limit.name
       IMAGES_BUCKET                       = aws_s3_bucket.images.bucket
       IMAGES_BASE_URL                     = "https://${aws_s3_bucket.images.bucket_regional_domain_name}"
       NEW_ORDER_TOPIC_ARN                 = aws_sns_topic.new_order.arn

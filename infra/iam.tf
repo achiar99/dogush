@@ -44,6 +44,7 @@ resource "aws_iam_role_policy" "lambda_dynamodb" {
         aws_dynamodb_table.counters.arn,
         aws_dynamodb_table.page_views.arn,
         "${aws_dynamodb_table.page_views.arn}/index/*",
+        aws_dynamodb_table.rate_limit.arn,
       ]
     }]
   })
