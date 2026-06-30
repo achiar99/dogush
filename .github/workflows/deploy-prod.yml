@@ -62,7 +62,7 @@ jobs:
       - name: Seed admin user
         env:
           API_URL: ${{ steps.tf.outputs.api_url }}
-          TF_VAR_admin_password: ${{ secrets.TF_VAR_ADMIN_PASSWORD }}
+          ADMIN_PASSWORD: ${{ secrets.TF_VAR_ADMIN_PASSWORD }}
         run: npm run seed-admin -w backend
 
       - name: Build frontend
