@@ -44,7 +44,20 @@ jobs:
         working-directory: infra
         run: terraform workspace select prod 2>/dev/null || terraform workspace new prod
 
-      - name: Terraform apply
+      # Step 1: create the ACM cert first so its domain_validation_options
+      # are known before the cert_validation for_each runs in step 2.
+      - name: Terraform apply (bootstrap cert)
+        working-directory: infra
+        env:
+          TF_VAR_jwt_secret: ${{ secrets.TF_VAR_JWT_SECRET }}
+          TF_VAR_admin_password: ${{ secrets.TF_VAR_ADMIN_PASSWORD }}
+        run: |
+          terraform apply -var-file="env/prod.tfvars" -auto-approve \
+            -target=aws_route53_zone.main \
+            -target=aws_acm_certificate.cert \
+            || true
+
+      - name: Terraform apply (full)
         working-directory: infra
         env:
           TF_VAR_jwt_secret: ${{ secrets.TF_VAR_JWT_SECRET }}
@@ -64,11 +77,6 @@ jobs:
           API_URL: ${{ steps.tf.outputs.api_url }}
           TF_VAR_admin_password: ${{ secrets.TF_VAR_ADMIN_PASSWORD }}
         run: npm run seed-admin -w backend
-
-      - name: Seed products
-        env:
-          API_URL: ${{ steps.tf.outputs.api_url }}
-        run: npm run seed-products -w backend
 
       - name: Build frontend
         env:
