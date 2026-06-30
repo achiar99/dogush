@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { Item } from '../api/items';
 import heConfig from '../../../shared/he.json';
 import { useCart } from '../context/CartContext';
+import { fireCartToast } from './CartToast';
 
 const { strings, currencySymbol } = heConfig as {
   strings: { orderNowButton: string };
@@ -117,6 +118,7 @@ export default function ItemCard({ item, onOrderNow }: Props) {
 
   const handleAddToCart = () => {
     add({ id: item.id, name: item.name, price: item.price, imageFile: item.imageFile });
+    fireCartToast(item.name, item.imageFile);
     setAddedFlash(true);
     setTimeout(() => setAddedFlash(false), 1200);
   };

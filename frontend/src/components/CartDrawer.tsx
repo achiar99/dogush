@@ -48,7 +48,11 @@ export default function CartDrawer({ onClose }: { onClose: () => void }) {
                   <span style={{ minWidth: 22, textAlign: 'center', fontWeight: 600 }}>{item.quantity}</span>
                   <button onClick={() => updateQty(item.id, item.quantity + 1)} style={qtyBtn}>+</button>
                 </div>
-                <button onClick={() => remove(item.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ccc', fontSize: 18, padding: 4, flexShrink: 0 }}>✕</button>
+                <button onClick={() => remove(item.id)} style={{ background: '#fff0f0', border: 'none', cursor: 'pointer', color: '#e53935', padding: '6px 8px', borderRadius: 6, flexShrink: 0, display: 'flex', alignItems: 'center' }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+                  </svg>
+                </button>
               </div>
             ))
           )}
