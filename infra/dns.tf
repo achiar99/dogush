@@ -24,7 +24,7 @@ locals {
 provider "aws" {
   alias   = "us_east_1"
   region  = "us-east-1"
-  profile = "AdministratorAccess-271691290266"
+  profile = var.aws_profile
   default_tags {
     tags = {
       Project     = var.project_name

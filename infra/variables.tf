@@ -1,3 +1,9 @@
+variable "aws_profile" {
+  description = "AWS CLI profile to use (leave empty in CI — uses env var credentials)"
+  type        = string
+  default     = null
+}
+
 variable "aws_region" {
   description = "AWS region for all resources"
   type        = string
