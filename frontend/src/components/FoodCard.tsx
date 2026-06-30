@@ -17,7 +17,7 @@ export default function PizzaCard({ item }: Props) {
   return (
     <article className="pizza-card" aria-label={`Pizza: ${item.name}`}>
       <div className="pizza-card__imageWrap">
-        <img className="pizza-card__image" src={item.imageUrl} alt={item.name} />
+        <img className="pizza-card__image" src={item.imageFile ? `/images/${item.imageFile}` : ''} alt={item.name} />
       </div>
 
       <div className="pizza-card__content">

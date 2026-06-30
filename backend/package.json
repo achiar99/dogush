@@ -9,7 +9,9 @@
     "start": "node dist/index.js",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "seed-admin": "tsx src/seedAdmin.ts",
-    "seed-products": "tsx src/seedProducts.ts"
+    "seed-products": "tsx src/seedProducts.ts",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.1014.0",
@@ -31,7 +33,11 @@
     "@types/express": "latest",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "latest",
+    "@types/supertest": "^7.2.0",
+    "@vitest/coverage-v8": "^4.1.9",
+    "supertest": "^7.2.2",
     "tsx": "latest",
-    "typescript": "latest"
+    "typescript": "latest",
+    "vitest": "^4.1.9"
   }
 }

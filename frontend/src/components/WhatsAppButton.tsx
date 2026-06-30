@@ -40,7 +40,6 @@ export default function WhatsAppButton() {
         justifyContent: 'center',
         boxShadow: '0 4px 16px rgba(0,0,0,0.22)',
         textDecoration: 'none',
-        transition: 'transform 0.15s',
       }}
       onMouseEnter={e => (e.currentTarget.style.transform = 'scale(1.1)')}
       onMouseLeave={e => (e.currentTarget.style.transform = 'scale(1)')}
