@@ -44,6 +44,9 @@ jobs:
         working-directory: infra
         run: terraform workspace select prod 2>/dev/null || terraform workspace new prod
 
+      - name: Build Lambda package
+        run: bash scripts/build-lambda.sh
+
       - name: Terraform apply
         working-directory: infra
         env:
