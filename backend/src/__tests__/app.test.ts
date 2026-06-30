@@ -186,7 +186,7 @@ describe('POST /api/orders', () => {
   });
 
   it('rejects invalid email', async () => {
-    vi.mocked(db.getProduct).mockResolvedValue({ id: 'p1', name: 'Burger', price: 50, category: 'food', active: true, imageUrl: '', description: '' });
+    vi.mocked(db.getProduct).mockResolvedValue({ id: 'p1', name: 'Burger', price: 50, category: 'food', active: true, description: '' });
     const res = await request(app).post('/api/orders').send({ customer: 'Test', email: 'bad-email', items: [{ id: 'p1', quantity: 1 }] });
     expect(res.status).toBe(400);
     expect(res.body.error).toMatch(/אימייל/);
@@ -200,7 +200,7 @@ describe('POST /api/orders', () => {
   });
 
   it('calculates total server-side and creates order', async () => {
-    vi.mocked(db.getProduct).mockResolvedValue({ id: 'p1', name: 'Burger', price: 50, category: 'food', active: true, imageUrl: '', description: '' });
+    vi.mocked(db.getProduct).mockResolvedValue({ id: 'p1', name: 'Burger', price: 50, category: 'food', active: true, description: '' });
     vi.mocked(db.createOrder).mockResolvedValue({
       orderId: 'ord1', customer: 'Test', items: [{ id: 'p1', quantity: 2 }], total: 100, status: 'pending', createdAt: new Date().toISOString(),
     } as any);

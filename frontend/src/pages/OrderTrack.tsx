@@ -118,7 +118,7 @@ export default function OrderTrack() {
                 order.address ? ['כתובת', order.address] : null,
                 ['סכום', `${order.total} ₪`],
                 ['מספר פריטים', String(order.items?.length ?? 0)],
-              ].filter(Boolean).map(([label, value]) => (
+              ].filter((row): row is string[] => row !== null).map(([label, value]) => (
                 <div key={label as string} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.95rem' }}>
                   <span style={{ color: '#888' }}>{label}</span>
                   <span style={{ fontWeight: 600 }}>{value}</span>
