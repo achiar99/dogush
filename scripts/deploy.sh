@@ -25,7 +25,7 @@ terraform workspace select "$ENV" 2>/dev/null || terraform workspace new "$ENV"
 
 # ── 2. Terraform apply ───────────────────────────────────────────────────────
 echo "==> terraform apply ($ENV)..."
-terraform apply -var-file="$TFVARS" -auto-approve
+terraform apply -var-file="$TFVARS" -var="aws_profile=${AWS_PROFILE}" -auto-approve
 
 # ── 3. Extract outputs ───────────────────────────────────────────────────────
 API_URL=$(terraform output -raw api_url)

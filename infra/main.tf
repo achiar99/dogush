@@ -14,7 +14,7 @@ terraform {
 
 provider "aws" {
   region  = var.aws_region
-  profile = "AdministratorAccess-271691290266"
+  profile = var.aws_profile
   default_tags {
     tags = {
       Project     = var.project_name
