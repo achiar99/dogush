@@ -10,6 +10,14 @@ terraform {
       version = "~> 2.0"
     }
   }
+
+  backend "s3" {
+    bucket       = "pet-store-tf-state-271691290266"
+    key          = "terraform.tfstate"
+    region       = "eu-north-1"
+    use_lockfile = true
+    encrypt      = true
+  }
 }
 
 provider "aws" {
