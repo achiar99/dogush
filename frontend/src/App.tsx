@@ -9,6 +9,7 @@ import AdminAnalytics from './pages/AdminAnalytics';
 import AdminCustomers from './pages/AdminCustomers';
 import RequireAdmin from './components/RequireAdmin';
 import InstallPrompt from './components/InstallPrompt';
+import CartToast from './components/CartToast';
 import Checkout from './pages/Checkout';
 import OrderHistory from './pages/OrderHistory';
 import OrderTrack from './pages/OrderTrack';
@@ -18,6 +19,7 @@ export default function App() {
   return (
     <>
     <InstallPrompt />
+    <CartToast />
     <Routes>
       <Route path="/" element={<Menu />} />
       <Route path="/menu" element={<Menu />} />
