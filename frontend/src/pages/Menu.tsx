@@ -144,7 +144,7 @@ export default function Menu() {
           </h2>
           <div className="menuGrid">
             {searchResults.map(item => (
-              <ItemCard key={item.id} item={item} onOrderNow={() => setCartOpen(true)} />
+              <ItemCard key={item.id} item={item} />
             ))}
           </div>
         </section>
@@ -158,7 +158,7 @@ export default function Menu() {
             <h2 className="menuSection__title">{cat.name}</h2>
             <div className="menuGrid">
               {(byCategory[cat.key] ?? []).map(item => (
-                <ItemCard key={item.id} item={item} onOrderNow={() => setCartOpen(true)} />
+                <ItemCard key={item.id} item={item} />
               ))}
             </div>
           </section>
