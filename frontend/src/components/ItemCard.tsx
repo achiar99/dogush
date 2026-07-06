@@ -59,16 +59,16 @@ export default function ItemCard({ item }: Props) {
               אזל מהמלאי
             </span>
           ) : (
-            <div className="item-card__price-row">
+            <>
               <div className="item-card__price">{currencySymbol}{item.price}</div>
               <button
-                className={`item-card__button${addedFlash ? ' item-card__button--added' : ''}`}
+                className={`item-card__addBtn${addedFlash ? ' item-card__addBtn--added' : ''}`}
                 type="button"
                 onClick={handleAddToCart}
               >
                 {addedFlash ? '✓ נוסף לסל' : strings.addToCartButton}
               </button>
-            </div>
+            </>
           )}
         </div>
       </div>
