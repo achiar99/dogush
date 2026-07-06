@@ -80,15 +80,10 @@ jobs:
           aws s3 sync frontend/dist/ "s3://$FRONTEND_BUCKET/" \
             --delete \
             --cache-control "public, max-age=31536000, immutable" \
-            --exclude "index.html" \
-            --exclude "sw.js" \
-            --exclude "registerSW.js" \
-            --exclude "manifest.webmanifest"
+            --exclude "index.html"
 
-          for f in index.html sw.js registerSW.js manifest.webmanifest; do
-            aws s3 cp "frontend/dist/$f" "s3://$FRONTEND_BUCKET/$f" \
-              --cache-control "no-cache, no-store, must-revalidate"
-          done
+          aws s3 cp frontend/dist/index.html "s3://$FRONTEND_BUCKET/index.html" \
+            --cache-control "no-cache, no-store, must-revalidate"
 
       - name: Summary
         run: |

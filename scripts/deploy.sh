@@ -51,18 +51,10 @@ echo "==> Deploying frontend to S3 ($FRONTEND_BUCKET)..."
 aws s3 sync "$REPO_ROOT/frontend/dist/" "s3://$FRONTEND_BUCKET/" \
   --delete \
   --cache-control "public, max-age=31536000, immutable" \
-  --exclude "index.html" \
-  --exclude "sw.js" \
-  --exclude "registerSW.js" \
-  --exclude "manifest.webmanifest"
+  --exclude "index.html"
 
-# index.html, the service worker, and its registration script must always be
-# revalidated — otherwise browsers/CDN cache the old sw.js for a year and
-# never notice a new app shell exists (deep links then bounce on a stale build).
-for f in index.html sw.js registerSW.js manifest.webmanifest; do
-  aws s3 cp "$REPO_ROOT/frontend/dist/$f" "s3://$FRONTEND_BUCKET/$f" \
-    --cache-control "no-cache, no-store, must-revalidate"
-done
+aws s3 cp "$REPO_ROOT/frontend/dist/index.html" "s3://$FRONTEND_BUCKET/index.html" \
+  --cache-control "no-cache, no-store, must-revalidate"
 
 FRONTEND_URL=$(terraform -chdir="$INFRA" output -raw frontend_url)
 echo ""
