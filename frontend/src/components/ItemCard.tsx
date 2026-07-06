@@ -42,7 +42,7 @@ export default function ItemCard({ item }: Props) {
       <div className="item-card__content">
         <h3 className="item-card__name">{item.name}</h3>
         <p className="item-card__desc">{item.description}</p>
-        {item.weight && <p style={{ margin: '0 0 6px', fontSize: '0.8rem', color: '#888' }}>⚖️ {item.weight}</p>}
+        <p style={{ margin: '0 0 6px', fontSize: '0.8rem', color: '#888', visibility: item.weight ? 'visible' : 'hidden' }}>⚖️ {item.weight || ' '}</p>
         <Link to={`/product/${item.id}`} style={{
           color: '#c15f2a', fontSize: '0.82rem', fontWeight: 600, textDecoration: 'underline',
           display: 'inline-block', marginBottom: 8,
