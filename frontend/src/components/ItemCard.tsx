@@ -16,8 +16,6 @@ export default function ItemCard({ item }: Props) {
   const { add } = useCart();
   const [addedFlash, setAddedFlash] = useState(false);
 
-  const hasDetails = !!(item.ingredients || (item.nutritionalValues?.length ?? 0) > 0 || (item.feedingTable?.length ?? 0) > 0);
-
   const handleAddToCart = () => {
     add({ id: item.id, name: item.name, price: item.price, imageFile: item.imageFile });
     fireCartToast(item.name, item.imageFile);
@@ -45,14 +43,12 @@ export default function ItemCard({ item }: Props) {
         <h3 className="item-card__name">{item.name}</h3>
         <p className="item-card__desc">{item.description}</p>
         {item.weight && <p style={{ margin: '0 0 6px', fontSize: '0.8rem', color: '#888' }}>⚖️ {item.weight}</p>}
-        {hasDetails && (
-          <Link to={`/product/${item.id}`} style={{
-            color: '#c15f2a', fontSize: '0.82rem', fontWeight: 600, textDecoration: 'underline',
-            display: 'inline-block', marginBottom: 8,
-          }}>
-            {strings.productSpecLink} ▾
-          </Link>
-        )}
+        <Link to={`/product/${item.id}`} style={{
+          color: '#c15f2a', fontSize: '0.82rem', fontWeight: 600, textDecoration: 'underline',
+          display: 'inline-block', marginBottom: 8,
+        }}>
+          {strings.productSpecLink} ▾
+        </Link>
         <div className="item-card__footer">
           {outOfStock ? (
             <span style={{ padding: '10px 14px', borderRadius: 14, backgroundColor: '#f3f3f3', color: '#aaa', fontWeight: 700, fontSize: '0.85rem', textAlign: 'center' }}>
