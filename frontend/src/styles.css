@@ -290,12 +290,8 @@ a {
   letter-spacing: -0.5px;
 }
 
-.item-card__actions {
-  display: contents;
-}
-
 .item-card__button {
-  width: 100%;
+  flex: 1;
   height: 44px;
   padding: 0 14px;
   border-radius: 14px;
@@ -313,26 +309,6 @@ a {
 .item-card__button:hover {
   background: #a84e22;
   transform: translateY(-1px);
-}
-
-.item-card__button--secondary {
-  width: 44px;
-  height: 44px;
-  flex-shrink: 0;
-  border-radius: 14px;
-  background: #f5efe9;
-  color: #c15f2a;
-  border: none;
-  font-size: 18px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.15s, transform 0.15s;
-}
-
-.item-card__button--secondary:hover {
-  background: #eee0d4;
-  transform: scale(1.06);
 }
 
 .item-card__button--added {

@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import Menu from './pages/Menu';
+import ProductPage from './pages/ProductPage';
 import AdminLogin from './pages/AdminLogin';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminOrders from './pages/AdminOrders';
@@ -23,6 +24,7 @@ export default function App() {
     <Routes>
       <Route path="/" element={<Menu />} />
       <Route path="/menu" element={<Menu />} />
+      <Route path="/product/:id" element={<ProductPage />} />
       <Route path="/admin" element={<AdminLogin />} />
       <Route path="/admin/dashboard" element={<RequireAdmin><AdminDashboard /></RequireAdmin>} />
       <Route path="/admin/products" element={<RequireAdmin><ProductEditor /></RequireAdmin>} />
