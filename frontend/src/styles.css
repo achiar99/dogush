@@ -216,6 +216,7 @@ a {
   transition: transform 0.22s ease, box-shadow 0.22s ease;
   display: flex;
   flex-direction: column;
+  cursor: pointer;
 }
 
 .item-card:hover {

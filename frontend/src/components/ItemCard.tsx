@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import type { Item } from '../api/items';
 import heConfig from '../../../shared/he.json';
 import { useCart } from '../context/CartContext';
@@ -14,9 +14,13 @@ type Props = { item: Item };
 
 export default function ItemCard({ item }: Props) {
   const { add } = useCart();
+  const navigate = useNavigate();
   const [addedFlash, setAddedFlash] = useState(false);
 
-  const handleAddToCart = () => {
+  const openProduct = () => navigate(`/product/${item.id}`);
+
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.stopPropagation();
     add({ id: item.id, name: item.name, price: item.price, imageFile: item.imageFile });
     fireCartToast(item.name, item.imageFile);
     setAddedFlash(true);
@@ -27,7 +31,14 @@ export default function ItemCard({ item }: Props) {
   const outOfStock = typeof item.stock === 'number' && item.stock === 0;
 
   return (
-    <article className="item-card" aria-label={item.name}>
+    <article
+      className="item-card"
+      aria-label={item.name}
+      role="link"
+      tabIndex={0}
+      onClick={openProduct}
+      onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openProduct(); } }}
+    >
       <div className="item-card__imageWrap">
         {badge && (
           <span className={`item-card__badge item-card__badge--${badge}`}>
@@ -42,8 +53,8 @@ export default function ItemCard({ item }: Props) {
       <div className="item-card__content">
         <h3 className="item-card__name">{item.name}</h3>
         <p className="item-card__desc">{item.description}</p>
-        <p style={{ margin: '0 0 6px', fontSize: '0.8rem', color: '#888', visibility: item.weight ? 'visible' : 'hidden' }}>⚖️ {item.weight || ' '}</p>
-        <Link to={`/product/${item.id}`} style={{
+        <p style={{ margin: '0 0 6px', fontSize: '0.8rem', color: '#888', visibility: item.weight ? 'visible' : 'hidden' }}>⚖️ {item.weight || ' '}</p>
+        <Link to={`/product/${item.id}`} onClick={e => e.stopPropagation()} style={{
           color: '#c15f2a', fontSize: '0.82rem', fontWeight: 600, textDecoration: 'underline',
           display: 'inline-block', marginBottom: 8,
         }}>
