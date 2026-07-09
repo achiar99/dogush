@@ -33,6 +33,7 @@ import {
 } from './dynamodb';
 import { getPresignedUploadUrl } from './s3';
 import { SNSClient, PublishCommand } from '@aws-sdk/client-sns';
+import { CostExplorerClient, GetCostAndUsageCommand } from '@aws-sdk/client-cost-explorer';
 import heConfig from '../../shared/he.json';
 
 const JWT_SECRET = process.env.JWT_SECRET;
@@ -44,6 +45,9 @@ const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '463119481219-u3u4o1cii
 const googleClient = new OAuth2Client(GOOGLE_CLIENT_ID);
 
 const snsClient = new SNSClient({ region: process.env.AWS_REGION || 'eu-north-1' });
+
+// Cost Explorer is a global service reachable only through the us-east-1 endpoint.
+const costExplorerClient = new CostExplorerClient({ region: 'us-east-1' });
 
 const TELEGRAM_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '';
 const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID || '';
@@ -574,6 +578,34 @@ app.get('/api/admin/stats', requireAdmin, async (req, res) => {
   } catch (error) {
     console.error('Stats error:', error);
     res.status(500).json({ error: 'Failed to fetch stats' });
+  }
+});
+
+// ─── Admin: AWS cost (month-to-date) ─────────────────────────────────────────
+app.get('/api/admin/aws-cost', requireAdmin, async (_req, res) => {
+  try {
+    const now = new Date();
+    // First day of the current month (UTC) → exclusive end is tomorrow so
+    // today's partial usage is included.
+    const start = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}-01`;
+    const end = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1))
+      .toISOString().slice(0, 10);
+
+    const result = await costExplorerClient.send(new GetCostAndUsageCommand({
+      TimePeriod: { Start: start, End: end },
+      Granularity: 'MONTHLY',
+      Metrics: ['UnblendedCost'],
+    }));
+
+    const cost = result.ResultsByTime?.[0]?.Total?.UnblendedCost;
+    res.json({
+      amount: cost?.Amount ? Number(Number(cost.Amount).toFixed(2)) : 0,
+      currency: cost?.Unit || 'USD',
+      periodStart: start,
+    });
+  } catch (error) {
+    console.error('AWS cost error:', error);
+    res.status(500).json({ error: 'Failed to fetch AWS cost' });
   }
 });
 
