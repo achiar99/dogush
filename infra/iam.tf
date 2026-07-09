@@ -78,6 +78,22 @@ resource "aws_iam_role_policy" "lambda_sns" {
   })
 }
 
+# Cost Explorer for the admin dashboard's month-to-date AWS spend.
+# ce:* actions do not support resource-level scoping, so Resource must be "*".
+resource "aws_iam_role_policy" "lambda_cost_explorer" {
+  name = "${local.prefix}-lambda-cost-explorer"
+  role = aws_iam_role.lambda.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect   = "Allow"
+      Action   = ["ce:GetCostAndUsage"]
+      Resource = "*"
+    }]
+  })
+}
+
 # ─── Admin IAM user for store management ──────────────────────────────────────
 resource "aws_iam_user" "admin" {
   name = "${local.prefix}-admin"

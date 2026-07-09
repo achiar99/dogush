@@ -86,6 +86,8 @@ export default function AdminDashboard() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [views, setViews] = useState<PageView[]>([]);
   const [loading, setLoading] = useState(true);
+  const [awsCost, setAwsCost] = useState<{ amount: number; currency: string } | null>(null);
+  const [awsCostError, setAwsCostError] = useState(false);
 
   useEffect(() => {
     Promise.all([
@@ -98,6 +100,21 @@ export default function AdminDashboard() {
       setViews(Array.isArray(pvs) ? pvs : []);
     }).catch(() => {}).finally(() => setLoading(false));
   }, []);
+
+  // AWS cost is fetched separately: Cost Explorer is slower and may be
+  // unavailable, so it shouldn't block or break the rest of the dashboard.
+  useEffect(() => {
+    adminFetch('/api/admin/aws-cost')
+      .then(r => (r.ok ? r.json() : Promise.reject(new Error('failed'))))
+      .then(d => setAwsCost({ amount: d.amount, currency: d.currency }))
+      .catch(() => setAwsCostError(true));
+  }, []);
+
+  const awsCostDisplay = awsCostError
+    ? '—'
+    : awsCost
+      ? (awsCost.currency === 'USD' ? `$${awsCost.amount.toLocaleString()}` : `${awsCost.amount.toLocaleString()} ${awsCost.currency}`)
+      : '...';
 
   // Last 7 days axis
   const days7 = Array.from({ length: 7 }, (_, i) => {
@@ -160,6 +177,7 @@ export default function AdminDashboard() {
                 { label: 'הזמנות היום', value: todayOrders, icon: '📦' },
                 { label: 'כניסות היום', value: todayViews, icon: '👁️' },
                 { label: `הכנסות ₪`, value: totalRevenue.toLocaleString(), icon: '💰' },
+                { label: 'עלות AWS החודש', value: awsCostDisplay, icon: '☁️' },
               ].map(k => (
                 <div key={k.label} style={{ background: '#fff', borderRadius: 16, padding: '16px 20px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
                   <div style={{ fontSize: 24, marginBottom: 4 }}>{k.icon}</div>
@@ -196,7 +214,7 @@ export default function AdminDashboard() {
         <style>{`
           .db-kpi-grid {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
             gap: 12px;
           }
           .db-chart-grid {
